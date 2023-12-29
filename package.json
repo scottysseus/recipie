@@ -5,8 +5,8 @@
   "main": "index.js",
   "scripts": {
     "prepare": "husky install",
-    "fmt": "prettier --check .",
-    "fmt:fix": "prettier --write .",
+    "fmt": "prettier --check . && gofmt -l ./server/*.go",
+    "fmt:fix": "prettier --write . && gofmt -l -w ./server/*.go",
     "build:server": "go build -C ./server -o ../bin/recipie",
     "server": "./bin/recipie serve",
     "dev:client": "vite -c ./vite.config.ts ./client/",
