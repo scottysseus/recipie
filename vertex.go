@@ -43,10 +43,10 @@ For example:
 Below is the recipe:
 `
 
-func ExtractRecipe(rawText string) error {
+func ExtractRecipe(rawText string) (string, error) {
 	client, err := genai.NewClient(context.Background(), projectId, region)
 	if err != nil {
-		return err
+		return "", err
 	}
 	gemini := client.GenerativeModel("gemini-pro")
 
@@ -54,9 +54,8 @@ func ExtractRecipe(rawText string) error {
 	rawPart := genai.Text(rawText)
 	resp, err := gemini.GenerateContent(context.Background(), prompt, rawPart)
 	if err != nil {
-		return fmt.Errorf("error generating content: %w", err)
+		return "", fmt.Errorf("error generating content: %w", err)
 	}
 	rb, _ := json.MarshalIndent(resp, "", "  ")
-	fmt.Println(string(rb))
-	return nil
+	return string(rb), nil
 }

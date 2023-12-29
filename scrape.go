@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"regexp"
 
 	"github.com/PuerkitoBio/goquery"
@@ -9,7 +10,7 @@ import (
 	"golang.org/x/net/html"
 )
 
-func ScrapeRecipe(recipeUrl string) {
+func ScrapeRecipe(recipeUrl string, resultC chan<- string, errC chan<- error) {
 	imgRegex := regexp.MustCompile("<img .*>")
 	singlespaceRegex := regexp.MustCompile("[ ]{2,}")
 	anySpaceRegex := regexp.MustCompile("[\\s]{2,}")
@@ -17,6 +18,7 @@ func ScrapeRecipe(recipeUrl string) {
 	c := colly.NewCollector()
 
 	c.OnHTML("body", func(e *colly.HTMLElement) {
+		fmt.Println("body found")
 		childTexts := childTexts(e, ":not(img, script, style)")
 		longestLength := 0
 		longestChild := ""
@@ -31,9 +33,16 @@ func ScrapeRecipe(recipeUrl string) {
 		text := imgRegex.ReplaceAllString(longestChild, " ")
 		text = singlespaceRegex.ReplaceAllString(text, " ")
 		text = anySpaceRegex.ReplaceAllString(text, "\n")
-		ExtractRecipe(text)
+		recipe, err := ExtractRecipe(text)
+		if err != nil {
+			fmt.Println("error found")
+			errC <- err
+			return
+		}
+		fmt.Println("recipe found")
+		resultC <- recipe
 	})
-
+	fmt.Println("visiting recipe url " + recipeUrl)
 	c.Visit(recipeUrl)
 }
 
