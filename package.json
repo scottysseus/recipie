@@ -1,0 +1,30 @@
+{
+  "name": "recipie",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "prepare": "husky install",
+    "fmt": "prettier --check .",
+    "fmt:fix": "prettier --write .",
+    "build:server": "go build -C ./server -o ../bin/recipie",
+    "server": "./bin/recipie serve",
+    "dev:client": "vite -c ./vite.config.ts ./client/",
+    "build:client": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "solid-js": "^1.8.7"
+  },
+  "devDependencies": {
+    "husky": "^8.0.3",
+    "husky-init": "^8.0.0",
+    "prettier": "^3.1.1",
+    "typescript": "^5.2.2",
+    "vite": "^5.0.8",
+    "vite-plugin-solid": "^2.8.0"
+  }
+}

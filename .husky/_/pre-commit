@@ -1,0 +1,32 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+log_prefix="[PRE-COMMIT]"
+
+echo "${log_prefix} running formatter"
+
+set +e
+bash -e <<TRY
+  bun run fmt
+TRY
+
+if [ $? -ne 0 ]; then
+  printf "\n${log_prefix} \033[41mCOMMIT FAILED:\033[0m Fix formatter errors and try again\n"
+  printf "${log_prefix} to fix formatting errors, run the command below:\n"
+  printf "${log_prefix}\tbun run fmt:fix\n"
+  exit 1
+fi
+
+echo "${log_prefix} running TypeScript compiler" 
+
+set +e
+bash -e <<TRY
+  bun run tsc
+TRY
+
+if [ $? -ne 0 ]; then
+  printf "\n${log_prefix} \033[41mCOMMIT FAILED:\033[0m Fix TypeScript errors and try again\n"
+  exit 1
+fi
+
+printf "\n${log_prefix} \033[42mCOMMIT SUCCEEDED\033[0m\n"
