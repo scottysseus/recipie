@@ -22,6 +22,7 @@
   "devDependencies": {
     "husky": "^8.0.0",
     "husky-init": "^8.0.0",
+    "pocketbase": "^0.20.1",
     "prettier": "^3.1.1",
     "typescript": "^5.2.2",
     "vite": "^5.0.8",

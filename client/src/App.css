@@ -5,6 +5,17 @@
   text-align: center;
 }
 
-label {
+label,
+input {
   margin-right: 10px;
+}
+
+code,
+progress,
+.progress-placeholder {
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 15px;
+  display: block;
+  height: 35px;
 }

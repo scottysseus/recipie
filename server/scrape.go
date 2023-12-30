@@ -19,6 +19,7 @@ func ScrapeRecipe(recipeUrl string, resultC chan<- string, errC chan<- error) {
 
 	c.OnHTML("body", func(e *colly.HTMLElement) {
 		fmt.Println("body found")
+		e.DOM.Find("img, script, style").Remove()
 		childTexts := childTexts(e, ":not(img, script, style)")
 		longestLength := 0
 		longestChild := ""
