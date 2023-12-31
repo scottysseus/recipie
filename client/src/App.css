@@ -5,6 +5,14 @@
   text-align: center;
 }
 
+.smart-import {
+  position: absolute;
+  display: block;
+  top: 3rem;
+  left: 0;
+  right: 0;
+}
+
 label,
 input {
   margin-right: 10px;
@@ -17,5 +25,4 @@ progress,
   margin-right: auto;
   margin-top: 15px;
   display: block;
-  height: 35px;
 }

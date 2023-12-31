@@ -19,35 +19,37 @@ function App() {
 
   return (
     <>
-      <label>Recipe URL</label>
-      <input
-        placeholder="www.chef.com/cookie-recipe"
-        onInput={(e) => setRecipeUrl(e.currentTarget.value)}
-      >
-        {recipeUrl()}
-      </input>
-      <input
-        type="button"
-        value={"Submit"}
-        onClick={async () => {
-          setIsLoading(true);
-          smartImport(recipeUrl())
-            .then((resp: Response) => resp.json())
-            .then((json) => {
-              setRecipe(json.recipes[0]);
-              setIsLoading(false);
-            });
-        }}
-      />
-      <Show when={recipe() && !isLoading()}>
-        <Recipe recipe={recipe()!!} />
-      </Show>
-      <Show
-        when={isLoading()}
-        fallback={<div class="progress-placeholder"></div>}
-      >
-        <progress></progress>
-      </Show>
+      <div class="smart-import">
+        <h1>Recipie</h1>
+        <input
+          placeholder="www.chef.com/cookie-recipe"
+          onInput={(e) => setRecipeUrl(e.currentTarget.value)}
+        >
+          {recipeUrl()}
+        </input>
+        <input
+          type="button"
+          value={"Submit"}
+          onClick={async () => {
+            setIsLoading(true);
+            smartImport(recipeUrl())
+              .then((resp: Response) => resp.json())
+              .then((json) => {
+                setRecipe(json.recipes[0]);
+                setIsLoading(false);
+              });
+          }}
+        />
+        <Show when={recipe() && !isLoading()}>
+          <Recipe recipe={recipe()!!} />
+        </Show>
+        <Show
+          when={isLoading()}
+          fallback={<div class="progress-placeholder"></div>}
+        >
+          <progress></progress>
+        </Show>
+      </div>
     </>
   );
 }
