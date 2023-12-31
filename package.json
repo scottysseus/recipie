@@ -7,8 +7,8 @@
     "prepare": "husky install",
     "fmt": "prettier --check . && gofmt -l ./server/*.go",
     "fmt:fix": "prettier --write . && gofmt -l -w ./server/*.go",
-    "build:server": "go build -C ./server -o ../bin/recipie",
-    "server": "./bin/recipie serve",
+    "build:server": "go build -C ./server -o ../dist/recipie",
+    "server": "./dist/recipie serve",
     "dev:client": "vite -c ./vite.config.ts ./client/",
     "build:client": "tsc && vite build",
     "preview": "vite preview"
@@ -20,10 +20,15 @@
     "solid-js": "^1.8.7"
   },
   "devDependencies": {
+    "@solidjs/router": "^0.10.5",
+    "autoprefixer": "^10.4.16",
     "husky": "^8.0.0",
     "husky-init": "^8.0.0",
     "pocketbase": "^0.20.1",
+    "postcss": "^8.4.32",
     "prettier": "^3.1.1",
+    "prettier-plugin-tailwindcss": "^0.5.10",
+    "tailwindcss": "^3.4.0",
     "typescript": "^5.2.2",
     "vite": "^5.0.8",
     "vite-plugin-solid": "^2.8.0"

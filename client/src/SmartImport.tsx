@@ -1,5 +1,5 @@
 import { For, Show, createSignal } from "solid-js";
-import "./App.css";
+import { Ingredient, Recipe } from "./recipe";
 
 const serverUrl = "http://127.0.0.1:8090/smartImport";
 
@@ -12,49 +12,48 @@ function smartImport(recipeUrl: string): Promise<Response> {
   });
 }
 
-function App() {
+export function SmartImport() {
   const [recipeUrl, setRecipeUrl] = createSignal("");
   const [recipe, setRecipe] = createSignal<Recipe | undefined>(undefined);
   const [isLoading, setIsLoading] = createSignal<boolean>(false);
 
   return (
-    <>
-      <div class="smart-import">
-        <h1>Recipie</h1>
-        <input
-          placeholder="www.chef.com/cookie-recipe"
-          onInput={(e) => setRecipeUrl(e.currentTarget.value)}
-        >
-          {recipeUrl()}
-        </input>
-        <input
-          type="button"
-          value={"Submit"}
-          onClick={async () => {
-            setIsLoading(true);
-            smartImport(recipeUrl())
-              .then((resp: Response) => resp.json())
-              .then((json) => {
-                setRecipe(json.recipes[0]);
-                setIsLoading(false);
-              });
-          }}
-        />
-        <Show when={recipe() && !isLoading()}>
-          <Recipe recipe={recipe()!!} />
-        </Show>
-        <Show
-          when={isLoading()}
-          fallback={<div class="progress-placeholder"></div>}
-        >
-          <progress></progress>
-        </Show>
-      </div>
-    </>
+    <div class="mt-12 flex justify-center align-text-bottom">
+      <input
+        class="me-2 w-96 border-2 border-black p-1"
+        placeholder="www.chef.com/cookie-recipe"
+        onInput={(e) => setRecipeUrl(e.currentTarget.value)}
+      >
+        {recipeUrl()}
+      </input>
+      <button
+        class="hover:underline"
+        onClick={async () => {
+          setIsLoading(true);
+          smartImport(recipeUrl())
+            .then((resp: Response) => resp.json())
+            .then((json) => {
+              setRecipe(json.recipes[0]);
+              setIsLoading(false);
+            });
+        }}
+      >
+        Import
+      </button>
+      <Show when={recipe() && !isLoading()}>
+        <RecipeSection recipe={recipe()!!} />
+      </Show>
+      <Show
+        when={isLoading()}
+        fallback={<div class="progress-placeholder"></div>}
+      >
+        <progress></progress>
+      </Show>
+    </div>
   );
 }
 
-function Recipe({ recipe }: { recipe: Recipe }) {
+function RecipeSection({ recipe }: { recipe: Recipe }) {
   return (
     <>
       <p>
@@ -78,7 +77,7 @@ function Ingredients({ recipe }: { recipe: Recipe }) {
           <th>Preparation</th>
         </tr>
         <For each={recipe.ingredients}>
-          {(ingredient) => (
+          {(ingredient: Ingredient) => (
             <tr>
               <td>{ingredient.name}</td>
               <td>{ingredient.quantity}</td>
@@ -91,5 +90,3 @@ function Ingredients({ recipe }: { recipe: Recipe }) {
     </table>
   );
 }
-
-export default App;
