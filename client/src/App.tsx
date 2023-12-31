@@ -1,6 +1,5 @@
-import { useState } from "react";
+import { For, Show, createSignal } from "solid-js";
 import "./App.css";
-import { Ingredient, Recipe } from "./recipe";
 
 const serverUrl = "http://127.0.0.1:8090/smartImport";
 
@@ -13,7 +12,47 @@ function smartImport(recipeUrl: string): Promise<Response> {
   });
 }
 
-function RecipeSection({ recipe }: { recipe: Recipe }) {
+function App() {
+  const [recipeUrl, setRecipeUrl] = createSignal("");
+  const [recipe, setRecipe] = createSignal<Recipe | undefined>(undefined);
+  const [isLoading, setIsLoading] = createSignal<boolean>(false);
+
+  return (
+    <>
+      <label>Recipe URL</label>
+      <input
+        placeholder="www.chef.com/cookie-recipe"
+        onInput={(e) => setRecipeUrl(e.currentTarget.value)}
+      >
+        {recipeUrl()}
+      </input>
+      <input
+        type="button"
+        value={"Submit"}
+        onClick={async () => {
+          setIsLoading(true);
+          smartImport(recipeUrl())
+            .then((resp: Response) => resp.json())
+            .then((json) => {
+              setRecipe(json.recipes[0]);
+              setIsLoading(false);
+            });
+        }}
+      />
+      <Show when={recipe() && !isLoading()}>
+        <Recipe recipe={recipe()!!} />
+      </Show>
+      <Show
+        when={isLoading()}
+        fallback={<div class="progress-placeholder"></div>}
+      >
+        <progress></progress>
+      </Show>
+    </>
+  );
+}
+
+function Recipe({ recipe }: { recipe: Recipe }) {
   return (
     <>
       <p>
@@ -21,12 +60,12 @@ function RecipeSection({ recipe }: { recipe: Recipe }) {
       </p>
       <br />
       <p>Ingredients</p>
-      <IngredientsTable recipe={recipe} />
+      <Ingredients recipe={recipe} />
     </>
   );
 }
 
-function IngredientsTable({ recipe }: { recipe: Recipe }) {
+function Ingredients({ recipe }: { recipe: Recipe }) {
   return (
     <table>
       <tbody>
@@ -36,53 +75,18 @@ function IngredientsTable({ recipe }: { recipe: Recipe }) {
           <th>Unit</th>
           <th>Preparation</th>
         </tr>
-        {recipe.ingredients.map((ingredient) => IngredientRow({ ingredient }))}
+        <For each={recipe.ingredients}>
+          {(ingredient) => (
+            <tr>
+              <td>{ingredient.name}</td>
+              <td>{ingredient.quantity}</td>
+              <td>{ingredient.unit}</td>
+              <td>{ingredient.preparation}</td>
+            </tr>
+          )}
+        </For>
       </tbody>
     </table>
-  );
-}
-
-function IngredientRow({ ingredient }: { ingredient: Ingredient }) {
-  return (
-    <tr>
-      <td>{ingredient.name}</td>
-      <td>{ingredient.quantity}</td>
-      <td>{ingredient.unit}</td>
-      <td>{ingredient.preparation}</td>
-    </tr>
-  );
-}
-
-function App() {
-  const [recipeUrl, setRecipeUrl] = useState("");
-  const [recipe, setRecipe] = useState<Recipe | undefined>(undefined);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-
-  return (
-    <>
-      <label>Recipe URL</label>
-      <input
-        placeholder="www.chef.com/cookie-recipe"
-        onInput={(e) => setRecipeUrl(e.currentTarget.value)}
-        value={recipeUrl}
-      />
-      <input
-        type="button"
-        value={"Submit"}
-        onClick={async () => {
-          setIsLoading(true);
-          smartImport(recipeUrl)
-            .then((resp: Response) => resp.json())
-            .then((json) => {
-              setRecipe(json.recipes[0]);
-              setIsLoading(false);
-            });
-        }}
-      />
-      {recipe && !isLoading && <RecipeSection recipe={recipe} />}
-      {isLoading && <progress></progress>}
-      {!isLoading && !recipe && <div className="progress-placeholder"></div>}
-    </>
   );
 }
 
