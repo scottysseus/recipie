@@ -36,15 +36,23 @@ function IngredientsTable({ recipe }: { recipe: Recipe }) {
           <th>Unit</th>
           <th>Preparation</th>
         </tr>
-        {recipe.ingredients.map((ingredient) => IngredientRow({ ingredient }))}
+        {recipe.ingredients.map((ingredient, i) =>
+          IngredientRow({ ingredient, i }),
+        )}
       </tbody>
     </table>
   );
 }
 
-function IngredientRow({ ingredient }: { ingredient: Ingredient }) {
+function IngredientRow({
+  ingredient,
+  i,
+}: {
+  ingredient: Ingredient;
+  i: number;
+}) {
   return (
-    <tr>
+    <tr key={i}>
       <td>{ingredient.name}</td>
       <td>{ingredient.quantity}</td>
       <td>{ingredient.unit}</td>
@@ -60,28 +68,30 @@ function App() {
 
   return (
     <>
-      <label>Recipe URL</label>
-      <input
-        placeholder="www.chef.com/cookie-recipe"
-        onInput={(e) => setRecipeUrl(e.currentTarget.value)}
-        value={recipeUrl}
-      />
-      <input
-        type="button"
-        value={"Submit"}
-        onClick={async () => {
-          setIsLoading(true);
-          smartImport(recipeUrl)
-            .then((resp: Response) => resp.json())
-            .then((json) => {
-              setRecipe(json.recipes[0]);
-              setIsLoading(false);
-            });
-        }}
-      />
-      {recipe && !isLoading && <RecipeSection recipe={recipe} />}
-      {isLoading && <progress></progress>}
-      {!isLoading && !recipe && <div className="progress-placeholder"></div>}
+      <div className="smart-import">
+        <h1>Recipie</h1>
+        <input
+          placeholder="Paste a link to your recipe here"
+          onInput={(e) => setRecipeUrl(e.currentTarget.value)}
+          value={recipeUrl}
+          className="smart-import-input"
+        />
+        <input
+          type="button"
+          value={"Submit"}
+          onClick={async () => {
+            setIsLoading(true);
+            smartImport(recipeUrl)
+              .then((resp: Response) => resp.json())
+              .then((json) => {
+                setRecipe(json.recipes[0]);
+                setIsLoading(false);
+              });
+          }}
+        />
+        {recipe && !isLoading && <RecipeSection recipe={recipe} />}
+        {isLoading && <progress></progress>}
+      </div>
     </>
   );
 }

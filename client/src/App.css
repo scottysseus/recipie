@@ -17,5 +17,16 @@ progress,
   margin-right: auto;
   margin-top: 15px;
   display: block;
-  height: 35px;
+}
+
+.smart-import-input {
+  width: 300px;
+}
+
+.smart-import {
+  position: fixed;
+  top: 3rem;
+  left: 0px;
+  right: 0px;
+  display: block;
 }
