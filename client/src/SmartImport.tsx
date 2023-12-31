@@ -18,28 +18,30 @@ export function SmartImport() {
   const [isLoading, setIsLoading] = createSignal<boolean>(false);
 
   return (
-    <div class="mt-12 flex justify-center align-text-bottom">
-      <input
-        class="me-2 w-96 border-2 border-black p-1"
-        placeholder="www.chef.com/cookie-recipe"
-        onInput={(e) => setRecipeUrl(e.currentTarget.value)}
-      >
-        {recipeUrl()}
-      </input>
-      <button
-        class="hover:underline"
-        onClick={async () => {
-          setIsLoading(true);
-          smartImport(recipeUrl())
-            .then((resp: Response) => resp.json())
-            .then((json) => {
-              setRecipe(json.recipes[0]);
-              setIsLoading(false);
-            });
-        }}
-      >
-        Import
-      </button>
+    <div>
+      <div class="m-12 flex justify-center align-text-bottom">
+        <input
+          class="me-2 w-96 border-2 border-black p-1"
+          placeholder="www.chef.com/cookie-recipe"
+          onInput={(e) => setRecipeUrl(e.currentTarget.value)}
+        >
+          {recipeUrl()}
+        </input>
+        <button
+          class="hover:underline"
+          onClick={async () => {
+            setIsLoading(true);
+            smartImport(recipeUrl())
+              .then((resp: Response) => resp.json())
+              .then((json) => {
+                setRecipe(json.recipes[0]);
+                setIsLoading(false);
+              });
+          }}
+        >
+          Import
+        </button>
+      </div>
       <Show when={recipe() && !isLoading()}>
         <RecipeSection recipe={recipe()!!} />
       </Show>
@@ -55,14 +57,14 @@ export function SmartImport() {
 
 function RecipeSection({ recipe }: { recipe: Recipe }) {
   return (
-    <>
+    <div>
       <p>
         <b>{recipe.name}</b>
       </p>
       <br />
       <p>Ingredients</p>
       <Ingredients recipe={recipe} />
-    </>
+    </div>
   );
 }
 

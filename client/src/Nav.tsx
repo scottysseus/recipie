@@ -9,7 +9,7 @@ export function Nav() {
         class="text-xs"
         style={{ visibility: authData() ? "inherit" : "hidden" }}
       >
-        signed in as: {authData()?.username || authData()?.email}
+        signed in as: {authData()?.email || "unknown"}
       </p>
       <nav class="mb-6 flex flex-wrap items-baseline justify-between">
         <div class="mr-6 flex flex-shrink-0 items-center">
