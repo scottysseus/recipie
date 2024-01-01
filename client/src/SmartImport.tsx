@@ -1,9 +1,8 @@
 import PocketBase from "pocketbase";
 import { For, Show, createSignal } from "solid-js";
+import { Loader } from "./Loader";
 import { usePocketBaseContext } from "./PocketBaseContext";
 import { Ingredient, Recipe } from "./recipe";
-
-const serverUrl = "/smartImport";
 
 function smartImport(
   pocketBase: PocketBase | undefined,
@@ -12,7 +11,7 @@ function smartImport(
   if (!pocketBase) {
     return Promise.resolve(new Response());
   }
-  return pocketBase.send(serverUrl, {
+  return pocketBase.send("/smartImport", {
     method: "POST",
     body: JSON.stringify({
       url: recipeUrl,
@@ -44,6 +43,8 @@ export function SmartImport() {
               .then((resp: Response) => resp.json())
               .then((json) => {
                 setRecipe(json.recipes[0]);
+              })
+              .finally(() => {
                 setIsLoading(false);
               });
           }}
@@ -58,7 +59,9 @@ export function SmartImport() {
         when={isLoading()}
         fallback={<div class="progress-placeholder"></div>}
       >
-        <progress></progress>
+        <div class="text-center">
+          <Loader />
+        </div>
       </Show>
     </div>
   );

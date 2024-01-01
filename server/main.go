@@ -54,7 +54,7 @@ func main() {
 			case recipes := <-resultC:
 				return c.JSON(200, &SmartImportResponse{Recipes: recipes})
 			}
-		})
+		}, apis.RequireRecordAuth())
 		return nil
 	})
 
