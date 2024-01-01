@@ -14,13 +14,21 @@ var region = "us-central1"
 
 const prompt = `
 I will provide you with a long-form cooking recipe blog post. 
-For each recipe in the post, please extract the instructions, the list of ingredients, and the prep time and total cooking time in minutes. 
-For each ingredient, extract its name, its quantity, the unit for its quantity, and any preparation (e.g. "chopped").
+For each recipe in the post, please extract:
+- the instructions
+- the list of ingredients
+- and the prep time and total cooking time in minutes
 
-Please respond with a JSON object. Return an empty JSON object if the post contains no cooking recipes.
+For each ingredient, please extract:
+- its name 
+- its quantity, 
+- the unit for its quantity (in singular form)
+- any preparation (e.g. "chopped")
+
+Please respond with a JSON object preceeded by the token <json>. Return an empty JSON object if the post contains no cooking recipes.
 
 For example:
-
+<json>
 {
     "recipes": [
         {
@@ -28,8 +36,8 @@ For example:
             "ingredients": [
                 {
                     "name": "onion",
-                    "quantity": "2",
-                    "unit": "cups",
+                    "quantity": "2.5",
+                    "unit": "cup",
                     "preparation": "chopped"
                 }
             ],
@@ -47,15 +55,15 @@ Below is the recipe:
 `
 
 func ExtractRecipe(rawText string) (VertexResponse, error) {
-	codeBlockStartRegex := regexp.MustCompile("```json")
-	codeBlockEndRegex := regexp.MustCompile("```")
+	codeBlockStartRegex := regexp.MustCompile("^[\\s\\S]*\\n{")
+	codeBlockEndRegex := regexp.MustCompile("}[^}]*$")
 
 	client, err := genai.NewClient(context.Background(), projectId, region)
 	if err != nil {
 		return VertexResponse{}, err
 	}
 	gemini := client.GenerativeModel("gemini-pro")
-	temperature := float32(0.05)
+	temperature := float32(0)
 	topP := float32(1)
 	maxOutputTokens := int32(2048)
 	gemini.GenerationConfig = genai.GenerationConfig{Temperature: &temperature, TopP: &topP, TopK: &topP, MaxOutputTokens: &maxOutputTokens}
@@ -80,11 +88,14 @@ func ExtractRecipe(rawText string) (VertexResponse, error) {
 
 	}
 
-	allParts = codeBlockStartRegex.ReplaceAllLiteralString(allParts, "")
-	allParts = codeBlockEndRegex.ReplaceAllLiteralString(allParts, "")
+	allParts = codeBlockStartRegex.ReplaceAllLiteralString(allParts, "{")
+	allParts = codeBlockEndRegex.ReplaceAllLiteralString(allParts, "}")
 
 	var vertexResponse VertexResponse
-	json.Unmarshal([]byte(allParts), &vertexResponse)
+	err = json.Unmarshal([]byte(allParts), &vertexResponse)
+	if err != nil {
+		return VertexResponse{}, err
+	}
 
 	return vertexResponse, nil
 }

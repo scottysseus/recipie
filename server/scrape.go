@@ -3,13 +3,13 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"regexp"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/gocolly/colly"
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/daos"
-	"github.com/pocketbase/pocketbase/forms"
 	"github.com/pocketbase/pocketbase/models"
 	"golang.org/x/net/html"
 )
@@ -22,6 +22,7 @@ func ScrapeRecipe(app *pocketbase.PocketBase, authRecord *models.Record, recipeU
 	c := colly.NewCollector()
 
 	c.OnHTML("body", func(e *colly.HTMLElement) {
+		app.Logger().Debug("found HTML body", "url", recipeUrl)
 		e.DOM.Find("img, script, style").Remove()
 		childTexts := childTexts(e, ":not(img, script, style)")
 		longestLength := 0
@@ -43,6 +44,8 @@ func ScrapeRecipe(app *pocketbase.PocketBase, authRecord *models.Record, recipeU
 			return
 		}
 
+		app.Logger().Debug("extracted recipe", "url", recipeUrl, "recipeCount", len(vertexResponse.Recipes), "firstRecipeName", vertexResponse.Recipes[0].Name)
+
 		ingredientsCollection, err := app.Dao().FindCollectionByNameOrId("ingredients")
 		if err != nil {
 			errC <- err
@@ -55,22 +58,26 @@ func ScrapeRecipe(app *pocketbase.PocketBase, authRecord *models.Record, recipeU
 			return
 		}
 
-		recipes := []string{}
+		if app.Dao() == nil {
+			errC <- fmt.Errorf("unable to access database")
+			return
+		}
 
 		app.Dao().RunInTransaction(func(txDao *daos.Dao) error {
+
+			recipes := []string{}
 			for _, recipe := range vertexResponse.Recipes {
 				ingredients := []string{}
 				for _, ingredient := range recipe.Ingredients {
 					newIngredientRecord := models.NewRecord(ingredientsCollection)
-					ingredientForm := forms.NewRecordUpsert(app, newIngredientRecord)
 
-					ingredientForm.LoadData(map[string]any{
-						"name":        ingredient.Name,
-						"quantity":    ingredient.Quantity,
-						"unit":        ingredient.Unit,
-						"preparation": ingredient.Preparation,
-						"creator":     authRecord.Id,
-					})
+					newIngredientRecord.Set("name", ingredient.Name)
+					newIngredientRecord.Set("quantity", ingredient.Quantity)
+					newIngredientRecord.Set("unit", ingredient.Unit)
+					newIngredientRecord.Set("preparation", ingredient.Preparation)
+					newIngredientRecord.Set("creator", authRecord.Id)
+
+					txDao.SaveRecord(newIngredientRecord)
 					ingredients = append(ingredients, newIngredientRecord.Id)
 				}
 				newRecipeRecord := models.NewRecord(recipesCollection)
@@ -79,22 +86,24 @@ func ScrapeRecipe(app *pocketbase.PocketBase, authRecord *models.Record, recipeU
 					errC <- err
 					return err
 				}
-				recipeForm := forms.NewRecordUpsert(app, newRecipeRecord)
-				recipeForm.LoadData(map[string]any{
-					"name":             recipe.Name,
-					"isDraft":          true,
-					"totalTimeMinutes": recipe.TotalTimeMinutes,
-					"prepTimeMinutes":  recipe.PrepTimeMinutes,
-					"creator":          authRecord.Id,
-					"ingredients":      ingredients,
-					"instructions":     instructions,
-				})
+
+				newRecipeRecord.Set("name", recipe.Name)
+				newRecipeRecord.Set("isDraft", true)
+				newRecipeRecord.Set("totalTimeMinutes", recipe.TotalTimeMinutes)
+				newRecipeRecord.Set("prepTimeMinutes", recipe.PrepTimeMinutes)
+				newRecipeRecord.Set("creator", authRecord.Id)
+				newRecipeRecord.Set("ingredients", ingredients)
+				newRecipeRecord.Set("instructions", instructions)
+
+				txDao.SaveRecord(newRecipeRecord)
 				recipes = append(recipes, newRecipeRecord.Id)
 			}
+
+			app.Logger().Debug("created recipes", "url", recipeUrl, "recipes", recipes)
+
+			resultC <- recipes
 			return nil
 		})
-
-		resultC <- recipes
 	})
 
 	c.Visit(recipeUrl)

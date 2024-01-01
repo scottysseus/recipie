@@ -1,10 +1,18 @@
+import PocketBase from "pocketbase";
 import { For, Show, createSignal } from "solid-js";
+import { usePocketBaseContext } from "./PocketBaseContext";
 import { Ingredient, Recipe } from "./recipe";
 
-const serverUrl = "http://127.0.0.1:8090/smartImport";
+const serverUrl = "/smartImport";
 
-function smartImport(recipeUrl: string): Promise<Response> {
-  return fetch(serverUrl, {
+function smartImport(
+  pocketBase: PocketBase | undefined,
+  recipeUrl: string,
+): Promise<Response> {
+  if (!pocketBase) {
+    return Promise.resolve(new Response());
+  }
+  return pocketBase.send(serverUrl, {
     method: "POST",
     body: JSON.stringify({
       url: recipeUrl,
@@ -16,6 +24,7 @@ export function SmartImport() {
   const [recipeUrl, setRecipeUrl] = createSignal("");
   const [recipe, setRecipe] = createSignal<Recipe | undefined>(undefined);
   const [isLoading, setIsLoading] = createSignal<boolean>(false);
+  const pocketBase = usePocketBaseContext()!;
 
   return (
     <div>
@@ -31,7 +40,7 @@ export function SmartImport() {
           class="hover:underline"
           onClick={async () => {
             setIsLoading(true);
-            smartImport(recipeUrl())
+            smartImport(pocketBase(), recipeUrl())
               .then((resp: Response) => resp.json())
               .then((json) => {
                 setRecipe(json.recipes[0]);

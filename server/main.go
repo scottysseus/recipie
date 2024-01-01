@@ -29,7 +29,12 @@ func main() {
 		} /* optional middlewares */)
 		e.Router.POST("/smartImport", func(c echo.Context) error {
 			info := apis.RequestInfo(c)
+
 			authRecord := info.AuthRecord
+			if authRecord == nil {
+				return c.String(500, "unable to extract auth record")
+			}
+
 			var request SmartImportRequest
 			if err := json.NewDecoder(c.Request().Body).Decode(&request); err != nil {
 				return nil
