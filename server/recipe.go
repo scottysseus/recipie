@@ -5,9 +5,11 @@ type VertexResponse struct {
 }
 
 type VertexRecipe struct {
-	Name         string             `json:"name"`
-	Ingredients  []VertexIngredient `json:"ingredients"`
-	Instructions []string           `json:"instructions"`
+	Name             string             `json:"name"`
+	Ingredients      []VertexIngredient `json:"ingredients"`
+	Instructions     []string           `json:"instructions"`
+	PrepTimeMinutes  int                `json:"prepTimeMinutes"`
+	TotalTimeMinutes int                `json:"totalTimeMinutes"`
 }
 
 type VertexIngredient struct {
@@ -15,4 +17,8 @@ type VertexIngredient struct {
 	Quantity    string `json:"quantity"`
 	Unit        string `json:"unit"`
 	Preparation string `json:"preparation"`
+}
+
+type SmartImportResponse struct {
+	Recipes []string `json:"recipes"`
 }

@@ -2,15 +2,19 @@ package main
 
 import (
 	"bytes"
-	"fmt"
+	"encoding/json"
 	"regexp"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/gocolly/colly"
+	"github.com/pocketbase/pocketbase"
+	"github.com/pocketbase/pocketbase/daos"
+	"github.com/pocketbase/pocketbase/forms"
+	"github.com/pocketbase/pocketbase/models"
 	"golang.org/x/net/html"
 )
 
-func ScrapeRecipe(recipeUrl string, resultC chan<- string, errC chan<- error) {
+func ScrapeRecipe(app *pocketbase.PocketBase, authRecord *models.Record, recipeUrl string, resultC chan<- []string, errC chan<- error) {
 	imgRegex := regexp.MustCompile("<img .*>")
 	singlespaceRegex := regexp.MustCompile("[ ]{2,}")
 	anySpaceRegex := regexp.MustCompile("[\\s]{2,}")
@@ -18,7 +22,6 @@ func ScrapeRecipe(recipeUrl string, resultC chan<- string, errC chan<- error) {
 	c := colly.NewCollector()
 
 	c.OnHTML("body", func(e *colly.HTMLElement) {
-		fmt.Println("body found")
 		e.DOM.Find("img, script, style").Remove()
 		childTexts := childTexts(e, ":not(img, script, style)")
 		longestLength := 0
@@ -34,16 +37,66 @@ func ScrapeRecipe(recipeUrl string, resultC chan<- string, errC chan<- error) {
 		text := imgRegex.ReplaceAllString(longestChild, " ")
 		text = singlespaceRegex.ReplaceAllString(text, " ")
 		text = anySpaceRegex.ReplaceAllString(text, "\n")
-		recipe, err := ExtractRecipe(text)
+		vertexResponse, err := ExtractRecipe(text)
 		if err != nil {
-			fmt.Println("error found")
 			errC <- err
 			return
 		}
-		fmt.Println("recipe found")
-		resultC <- recipe
+
+		ingredientsCollection, err := app.Dao().FindCollectionByNameOrId("ingredients")
+		if err != nil {
+			errC <- err
+			return
+		}
+
+		recipesCollection, err := app.Dao().FindCollectionByNameOrId("recipes")
+		if err != nil {
+			errC <- err
+			return
+		}
+
+		recipes := []string{}
+
+		app.Dao().RunInTransaction(func(txDao *daos.Dao) error {
+			for _, recipe := range vertexResponse.Recipes {
+				ingredients := []string{}
+				for _, ingredient := range recipe.Ingredients {
+					newIngredientRecord := models.NewRecord(ingredientsCollection)
+					ingredientForm := forms.NewRecordUpsert(app, newIngredientRecord)
+
+					ingredientForm.LoadData(map[string]any{
+						"name":        ingredient.Name,
+						"quantity":    ingredient.Quantity,
+						"unit":        ingredient.Unit,
+						"preparation": ingredient.Preparation,
+						"creator":     authRecord.Id,
+					})
+					ingredients = append(ingredients, newIngredientRecord.Id)
+				}
+				newRecipeRecord := models.NewRecord(recipesCollection)
+				instructions, err := json.Marshal(&VertexRecipe{Instructions: recipe.Instructions})
+				if err != nil {
+					errC <- err
+					return err
+				}
+				recipeForm := forms.NewRecordUpsert(app, newRecipeRecord)
+				recipeForm.LoadData(map[string]any{
+					"name":             recipe.Name,
+					"isDraft":          true,
+					"totalTimeMinutes": recipe.TotalTimeMinutes,
+					"prepTimeMinutes":  recipe.PrepTimeMinutes,
+					"creator":          authRecord.Id,
+					"ingredients":      ingredients,
+					"instructions":     instructions,
+				})
+				recipes = append(recipes, newRecipeRecord.Id)
+			}
+			return nil
+		})
+
+		resultC <- recipes
 	})
-	fmt.Println("visiting recipe url " + recipeUrl)
+
 	c.Visit(recipeUrl)
 }
 
