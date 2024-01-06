@@ -21,6 +21,13 @@ type SmartImportRequest struct {
 func main() {
 	app := pocketbase.New()
 
+	app.OnAfterBootstrap().Add(func(e *core.BootstrapEvent) error {
+		if err := InitDb(app); err != nil {
+			return err
+		}
+		return nil
+	})
+
 	// serves static files from the provided public dir (if exists)
 	app.OnBeforeServe().Add(func(e *core.ServeEvent) error {
 		e.Router.GET("/hello/:name", func(c echo.Context) error {

@@ -8,10 +8,6 @@
   content: "";
 }
 
-:root {
-  font-size: small;
-}
-
 @keyframes dotty {
   0% {
     content: "";

@@ -13,7 +13,7 @@ export function SignIn() {
     <div class="flex justify-center">
       <div class="flex flex-col justify-center p-12 text-center">
         <button
-          class="text-xs hover:underline"
+          class="hover:underline"
           onClick={() => signInGoogle(pocketBase(), setAuthData, navigate)}
         >
           Sign in with Google
