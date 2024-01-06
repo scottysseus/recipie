@@ -6,6 +6,8 @@ Recipie is built on [PocketBase](https://pocketbase.io/) with a [solidjs](https:
 
 ## Development Setup
 
+Install the latest [golang](https://go.dev/doc/install) version.
+
 Install [bun](https://bun.sh/):
 
 ```bash
