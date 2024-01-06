@@ -14,6 +14,12 @@ Install [bun](https://bun.sh/):
 npm install -g bun
 ```
 
+and install all dependencies:
+
+```bash
+bun install
+```
+
 Start the backend server:
 
 ```bash
