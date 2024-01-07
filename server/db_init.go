@@ -90,8 +90,85 @@ func InitDb(app *pocketbase.PocketBase) error {
 		UpdateRule: types.Pointer("@request.auth.id != ''"),
 		DeleteRule: types.Pointer("@request.auth.id != ''"),
 	}
+	if err = createIfNotExist(app, recipesCollection); err != nil {
+		return err
+	}
 
-	return createIfNotExist(app, recipesCollection)
+	smartImportsCollection := &models.Collection{
+		Name: "smartImports",
+		Type: models.CollectionTypeBase,
+		Schema: schema.NewSchema(&schema.SchemaField{
+			Name: "creator",
+			Type: schema.FieldTypeRelation,
+			Options: &schema.RelationOptions{
+				MaxSelect:    types.Pointer(1),
+				CollectionId: userCollection.Id,
+			},
+		}, &schema.SchemaField{
+			Name: "status",
+			Type: schema.FieldTypeSelect,
+			Options: &schema.SelectOptions{
+				Values: []string{"success", "error", "processing"},
+			},
+		}, &schema.SchemaField{
+			Name: "url",
+			Type: schema.FieldTypeText,
+		}, &schema.SchemaField{
+			Name: "rawText",
+			Type: schema.FieldTypeText,
+		}, &schema.SchemaField{
+			Name: "error",
+			Type: schema.FieldTypeJson,
+		}, &schema.SchemaField{
+			Name: "recipes",
+			Type: schema.FieldTypeRelation,
+			Options: &schema.RelationOptions{
+				CollectionId: recipesCollection.Id,
+			},
+		}),
+		ListRule:   types.Pointer("@request.auth.id != ''"),
+		ViewRule:   types.Pointer("@request.auth.id != ''"),
+		CreateRule: types.Pointer("@request.auth.id != ''"),
+		UpdateRule: types.Pointer("@request.auth.id != ''"),
+		DeleteRule: types.Pointer("@request.auth.id != ''"),
+	}
+
+	smartImportsCollection.Schema.AddField(&schema.SchemaField{
+		Name: "parent",
+		Type: schema.FieldTypeRelation,
+		Options: &schema.RelationOptions{
+			MaxSelect:    types.Pointer(1),
+			CollectionId: smartImportsCollection.Id,
+		},
+	})
+	if err = createIfNotExist(app, smartImportsCollection); err != nil {
+		return err
+	}
+
+	bulkSmartImportsCollection := &models.Collection{
+		Name: "bulkSmartImports", Type: models.CollectionTypeBase,
+		Schema: schema.NewSchema(&schema.SchemaField{
+			Name: "creator",
+			Type: schema.FieldTypeRelation,
+			Options: &schema.RelationOptions{
+				MaxSelect:    types.Pointer(1),
+				CollectionId: userCollection.Id,
+			},
+		}, &schema.SchemaField{
+			Name: "imports",
+			Type: schema.FieldTypeRelation,
+			Options: &schema.RelationOptions{
+				CollectionId: smartImportsCollection.Id,
+			},
+		}),
+		ListRule:   types.Pointer("@request.auth.id != ''"),
+		ViewRule:   types.Pointer("@request.auth.id != ''"),
+		CreateRule: types.Pointer("@request.auth.id != ''"),
+		UpdateRule: types.Pointer("@request.auth.id != ''"),
+		DeleteRule: types.Pointer("@request.auth.id != ''"),
+	}
+
+	return createIfNotExist(app, bulkSmartImportsCollection)
 }
 
 func createIfNotExist(app *pocketbase.PocketBase, collection *models.Collection) error {

@@ -2,116 +2,60 @@ package main
 
 import (
 	"bytes"
-	"encoding/json"
-	"fmt"
+	"net/http"
 	"regexp"
 
 	"github.com/PuerkitoBio/goquery"
-	"github.com/gocolly/colly"
-	"github.com/pocketbase/pocketbase"
-	"github.com/pocketbase/pocketbase/daos"
-	"github.com/pocketbase/pocketbase/models"
 	"golang.org/x/net/html"
 )
 
-func ScrapeRecipe(app *pocketbase.PocketBase, authRecord *models.Record, recipeUrl string, resultC chan<- []string, errC chan<- error) {
+func ScrapeRecipe(recipeUrl string) (string, error) {
 	imgRegex := regexp.MustCompile("<img .*>")
 	singlespaceRegex := regexp.MustCompile("[ ]{2,}")
 	anySpaceRegex := regexp.MustCompile("[\\s]{2,}")
 
-	c := colly.NewCollector()
+	res, err := http.Get(recipeUrl)
+	if err != nil {
+		return "", err
+	}
+	defer res.Body.Close()
 
-	c.OnHTML("body", func(e *colly.HTMLElement) {
-		app.Logger().Debug("found HTML body", "url", recipeUrl)
-		e.DOM.Find("img, script, style").Remove()
-		childTexts := childTexts(e, ":not(img, script, style)")
-		longestLength := 0
-		longestChild := ""
+	doc, err := goquery.NewDocumentFromReader(res.Body)
+	if err != nil {
+		return "", err
+	}
 
-		for i := 0; i < len(childTexts); i++ {
-			if len(childTexts[i]) > longestLength {
-				longestChild = childTexts[i]
-				longestLength = len(longestChild)
-			}
+	bodySelection := doc.Find("body")
+
+	// remove all image, script, and style tags from the DOM to ensure they don't appear in the text
+	bodySelection.Find("img, script, style").Remove()
+
+	// I don't understand how childTexts works exactly, but it returns many different pieces of the page text.
+	// one of these pieces usually has the entire page text (and is the longest piece), so finding that is our best bet
+	childTexts := childTexts(bodySelection, ":not(img, script, style)")
+	longestLength := 0
+	longestChild := ""
+
+	for i := 0; i < len(childTexts); i++ {
+		if len(childTexts[i]) > longestLength {
+			longestChild = childTexts[i]
+			longestLength = len(longestChild)
 		}
+	}
 
-		text := imgRegex.ReplaceAllString(longestChild, " ")
-		text = singlespaceRegex.ReplaceAllString(text, " ")
-		text = anySpaceRegex.ReplaceAllString(text, "\n")
-		vertexResponse, err := ExtractRecipe(text)
-		if err != nil {
-			errC <- err
-			return
-		}
+	// images can sometimes be embedded in text and the call to Remove() above doesn't remove these,
+	// so we need to use a regular expression specifically to remove them.
+	// cleaning up the white spacing can also help reduce the costs of the GenAI API.
+	rawRecipeText := imgRegex.ReplaceAllString(longestChild, " ")
+	rawRecipeText = singlespaceRegex.ReplaceAllString(rawRecipeText, " ")
+	rawRecipeText = anySpaceRegex.ReplaceAllString(rawRecipeText, "\n")
 
-		app.Logger().Debug("extracted recipe", "url", recipeUrl, "recipeCount", len(vertexResponse.Recipes), "firstRecipeName", vertexResponse.Recipes[0].Name)
-
-		ingredientsCollection, err := app.Dao().FindCollectionByNameOrId("ingredients")
-		if err != nil {
-			errC <- err
-			return
-		}
-
-		recipesCollection, err := app.Dao().FindCollectionByNameOrId("recipes")
-		if err != nil {
-			errC <- err
-			return
-		}
-
-		if app.Dao() == nil {
-			errC <- fmt.Errorf("unable to access database")
-			return
-		}
-
-		app.Dao().RunInTransaction(func(txDao *daos.Dao) error {
-
-			recipes := []string{}
-			for _, recipe := range vertexResponse.Recipes {
-				ingredients := []string{}
-				for _, ingredient := range recipe.Ingredients {
-					newIngredientRecord := models.NewRecord(ingredientsCollection)
-
-					newIngredientRecord.Set("name", ingredient.Name)
-					newIngredientRecord.Set("quantity", ingredient.Quantity)
-					newIngredientRecord.Set("unit", ingredient.Unit)
-					newIngredientRecord.Set("preparation", ingredient.Preparation)
-					newIngredientRecord.Set("creator", authRecord.Id)
-
-					txDao.SaveRecord(newIngredientRecord)
-					ingredients = append(ingredients, newIngredientRecord.Id)
-				}
-				newRecipeRecord := models.NewRecord(recipesCollection)
-				instructions, err := json.Marshal(&VertexRecipe{Instructions: recipe.Instructions})
-				if err != nil {
-					errC <- err
-					return err
-				}
-
-				newRecipeRecord.Set("name", recipe.Name)
-				newRecipeRecord.Set("isDraft", true)
-				newRecipeRecord.Set("totalTimeMinutes", recipe.TotalTimeMinutes)
-				newRecipeRecord.Set("prepTimeMinutes", recipe.PrepTimeMinutes)
-				newRecipeRecord.Set("creator", authRecord.Id)
-				newRecipeRecord.Set("ingredients", ingredients)
-				newRecipeRecord.Set("instructions", instructions)
-
-				txDao.SaveRecord(newRecipeRecord)
-				recipes = append(recipes, newRecipeRecord.Id)
-			}
-
-			app.Logger().Debug("created recipes", "url", recipeUrl, "recipes", recipes)
-
-			resultC <- recipes
-			return nil
-		})
-	})
-
-	c.Visit(recipeUrl)
+	return rawRecipeText, nil
 }
 
-func childTexts(h *colly.HTMLElement, goquerySelector string) []string {
+func childTexts(selection *goquery.Selection, childSelector string) []string {
 	var res []string
-	h.DOM.Find(goquerySelector).Each(func(_ int, s *goquery.Selection) {
+	selection.Find(childSelector).Each(func(_ int, s *goquery.Selection) {
 		res = append(res, " "+selectionToText(s)+" ")
 	})
 	return res
