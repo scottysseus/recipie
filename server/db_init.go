@@ -47,15 +47,8 @@ func InitDb(app *pocketbase.PocketBase) error {
 		DeleteRule: types.Pointer("@request.auth.id != ''"),
 	}
 
-	existingIngredientsCollection, err := app.Dao().FindCollectionByNameOrId("ingredients")
-	if err != nil && err != sql.ErrNoRows {
+	if err = createIfNotExist(app, ingredientsCollection); err != nil {
 		return err
-	}
-
-	if existingIngredientsCollection == nil {
-		if err := app.Dao().SaveCollection(ingredientsCollection); err != nil {
-			return err
-		}
 	}
 
 	recipesCollection := &models.Collection{
@@ -98,13 +91,17 @@ func InitDb(app *pocketbase.PocketBase) error {
 		DeleteRule: types.Pointer("@request.auth.id != ''"),
 	}
 
-	existingRecipesCollection, err := app.Dao().FindCollectionByNameOrId("recipes")
+	return createIfNotExist(app, recipesCollection)
+}
+
+func createIfNotExist(app *pocketbase.PocketBase, collection *models.Collection) error {
+	existingCollection, err := app.Dao().FindCollectionByNameOrId(collection.Name)
 	if err != nil && err != sql.ErrNoRows {
 		return err
 	}
 
-	if existingRecipesCollection == nil {
-		if err := app.Dao().SaveCollection(recipesCollection); err != nil {
+	if existingCollection == nil {
+		if err := app.Dao().SaveCollection(collection); err != nil {
 			return err
 		}
 	}
