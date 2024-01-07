@@ -21,7 +21,7 @@ type SmartImportRequest struct {
 func main() {
 	app := pocketbase.New()
 
-	app.OnAfterBootstrap().Add(func(e *core.BootstrapEvent) error {
+	app.OnBeforeServe().Add(func(e *core.ServeEvent) error {
 		if err := InitDb(app); err != nil {
 			return err
 		}
@@ -65,7 +65,13 @@ func main() {
 		return nil
 	})
 
+	if err := app.Bootstrap(); err != nil {
+		log.Println("failed to bootstrap")
+		log.Fatal(err)
+	}
+
 	if err := app.Start(); err != nil {
+		log.Println("failed to start")
 		log.Fatal(err)
 	}
 }
