@@ -18,6 +18,12 @@ export function SignIn() {
         >
           Sign in with Google
         </button>
+        <button
+          class="hover:underline"
+          onClick={() => signInFacebook(pocketBase(), setAuthData, navigate)}
+        >
+          Sign in with Facebook
+        </button>
       </div>
     </div>
   );
@@ -32,6 +38,19 @@ async function signInGoogle(
     const authData = await pocketBase
       .collection("users")
       .authWithOAuth2({ provider: "google" });
+    setAuthData(authData.record);
+    navigate("/");
+  }
+}
+async function signInFacebook(
+  pocketBase: PocketBase | undefined,
+  setAuthData: Setter<AuthModel | undefined>,
+  navigate: Navigator,
+) {
+  if (pocketBase) {
+    const authData = await pocketBase
+      .collection("users")
+      .authWithOAuth2({ provider: "facebook" });
     setAuthData(authData.record);
     navigate("/");
   }
