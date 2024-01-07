@@ -33,7 +33,7 @@ In a separate terminal, start the client dev server:
 bun run dev:client
 ```
 
-Which should be available at `http://localhost:5173`.
+Which should be available at http://localhost:5173.
 
 ### App Setup
 
