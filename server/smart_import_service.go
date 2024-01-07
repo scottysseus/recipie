@@ -23,13 +23,13 @@ func NewSmartImportService(app *pocketbase.PocketBase) *SmartImportService {
 	return &SmartImportService{app: app}
 }
 
-func (service *SmartImportService) SmartImport(params ImportParameters, authRecord *models.Record) error {
+func (service *SmartImportService) SmartImport(params ImportParameters, authRecord *models.Record) {
 	var rawRecipeText string
 	var err error
 	if params.Url != "" {
 		rawRecipeText, err = ScrapeRecipe(params.Url)
 		if err != nil {
-			return errors.New("failed to scrape recipe")
+
 		}
 	} else {
 		rawRecipeText = params.RawText
@@ -37,9 +37,14 @@ func (service *SmartImportService) SmartImport(params ImportParameters, authReco
 
 	vertexResponse, err := ExtractRecipe(rawRecipeText)
 	if err != nil {
-		return errors.New("failed to retreive parsed recipe from vertex")
+		// return errors.New("failed to retreive parsed recipe from vertex")
+		return
 	}
-	return insertRecipe(service.app, vertexResponse, authRecord, params.ImportRecordId)
+	err = insertRecipe(service.app, vertexResponse, authRecord, params.ImportRecordId)
+	if err != nil {
+		// TODO log
+		return
+	}
 }
 
 func insertRecipe(app *pocketbase.PocketBase, vertexResponse VertexResponse, authRecord *models.Record, importRecordId string) error {
@@ -104,8 +109,18 @@ func insertRecipe(app *pocketbase.PocketBase, vertexResponse VertexResponse, aut
 
 		smartImportRecord.Set("status", SmartImportStatusSuccess)
 		smartImportRecord.Set("recipes", recipes)
-		return nil
+		return txDao.SaveRecord(smartImportRecord)
+
 	})
 
 	return err
 }
+
+// func (service *SmartImportService) updateFailureStatusOrLog(params ImportParameters, authRecord *models.Record, err error) {
+// 	smartImportRecord, err := service.app.Dao().FindRecordById("smartImports", importRecordId)
+// 	if err != nil {
+// 		return service.app.Logger().Error("failed to update ")
+// 	}
+
+// 	smartImportRecord.Set("status", SmartImportStatusSuccess)
+// }
