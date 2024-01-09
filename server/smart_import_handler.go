@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"github.com/labstack/echo/v5"
 	"github.com/pocketbase/pocketbase"
@@ -23,12 +24,14 @@ type SmartImportResponse struct {
 }
 
 type ErrorResponse struct {
+	Code  string `json:"code"`
 	Error string `json:"error"`
 }
 
 const (
 	SmartImportErrorEmptyItem = "smartImport.emptyItem"
 	ErrorBadJson              = "common.badJson"
+	ErrorInternalDatabase     = "common.internal.database"
 )
 
 const (
@@ -49,44 +52,59 @@ func NewSmartImportHandler(app *pocketbase.PocketBase, importService *SmartImpor
 func (handler *SmartImportHandler) SmartImport(reqCtx echo.Context, authRecord *models.Record) error {
 	var request SmartImportRequest
 	if err := json.NewDecoder(reqCtx.Request().Body).Decode(&request); err != nil {
-		reqCtx.JSON(400, &ErrorResponse{Error: ErrorBadJson})
-		return nil
+		return reqCtx.JSON(400, &ErrorResponse{Code: ErrorBadJson, Error: err.Error()})
 	}
 
 	importRecordIds := make([]string, len(request.Items))
-	var id string
+	var bulkId string
 
 	err := handler.app.Dao().RunInTransaction(func(txDao *daos.Dao) error {
-		for _, item := range request.Items {
-			id, err := handler.insertSmartImport(txDao, item, authRecord)
+		for i, item := range request.Items {
+			importRecordId, err := handler.insertSmartImport(txDao, item, authRecord)
 			if err != nil {
-				return err
+				return reqCtx.JSON(500, &ErrorResponse{Code: ErrorInternalDatabase, Error: err.Error()})
 			}
-			importRecordIds = append(importRecordIds, id)
+			if importRecordId == "" {
+				return reqCtx.JSON(500, &ErrorResponse{
+					Code: ErrorInternalDatabase, Error: "creating a record did not return its id"})
+			}
+			importRecordIds[i] = importRecordId
 		}
 		var err error
-		id, err = handler.insertBulkSmartImport(txDao, importRecordIds, authRecord)
+		bulkId, err = handler.insertBulkSmartImport(txDao, importRecordIds, authRecord)
 		if err != nil {
-			return err
+			return reqCtx.JSON(500, &ErrorResponse{Code: ErrorInternalDatabase, Error: err.Error()})
 		}
 
 		return nil
 	})
 	if err != nil {
-		return err
+		return reqCtx.JSON(500, &ErrorResponse{Code: ErrorInternalDatabase, Error: err.Error()})
 	}
 
 	// now kick off all the smart imports
 	for i, item := range request.Items {
-		go handler.importService.SmartImport(ImportParameters{Url: item.Url, RawText: item.RawText, ImportRecordId: importRecordIds[i]}, authRecord)
+		params := ImportParameters{Url: item.Url, RawText: item.RawText, ImportRecordId: importRecordIds[i]}
+		if importRecordIds[i] == "" {
+			identifier := item.RawText[0:64]
+			if identifier == "" {
+				identifier = item.Url
+			}
+			handler.importService.UpdateFailureStatusOrLog(
+				params, authRecord, fmt.Errorf("no smartImports record for '%s'", identifier))
+			continue
+		}
+		go handler.importService.SmartImport(params, authRecord)
 	}
 
-	reqCtx.JSON(200, &SmartImportResponse{Id: id})
+	return reqCtx.JSON(200, &SmartImportResponse{Id: bulkId})
 
-	return nil
 }
 
-func (handler *SmartImportHandler) insertBulkSmartImport(txDao *daos.Dao, items []string, authRecord *models.Record) (string, error) {
+func (handler *SmartImportHandler) insertBulkSmartImport(
+	txDao *daos.Dao,
+	items []string,
+	authRecord *models.Record) (string, error) {
 	bulkCollection, err := handler.app.Dao().FindCollectionByNameOrId("bulkSmartImports")
 	if err != nil {
 		return "", err
@@ -99,7 +117,10 @@ func (handler *SmartImportHandler) insertBulkSmartImport(txDao *daos.Dao, items 
 	return newRecord.Id, txDao.SaveRecord(newRecord)
 }
 
-func (handler *SmartImportHandler) insertSmartImport(txDao *daos.Dao, item SmartImportItem, authRecord *models.Record) (string, error) {
+func (handler *SmartImportHandler) insertSmartImport(
+	txDao *daos.Dao,
+	item SmartImportItem,
+	authRecord *models.Record) (string, error) {
 	smartImportsCollection, err := handler.app.Dao().FindCollectionByNameOrId("smartImports")
 	if err != nil {
 		return "", err
@@ -114,6 +135,7 @@ func (handler *SmartImportHandler) insertSmartImport(txDao *daos.Dao, item Smart
 		newRecord.Set("rawText", item.RawText)
 	}
 
-	return newRecord.Id, txDao.SaveRecord(newRecord)
+	err = txDao.SaveRecord(newRecord)
+	return newRecord.Id, err
 
 }

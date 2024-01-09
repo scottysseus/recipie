@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/daos"
@@ -29,7 +30,8 @@ func (service *SmartImportService) SmartImport(params ImportParameters, authReco
 	if params.Url != "" {
 		rawRecipeText, err = ScrapeRecipe(params.Url)
 		if err != nil {
-
+			service.UpdateFailureStatusOrLog(params, authRecord, err)
+			return
 		}
 	} else {
 		rawRecipeText = params.RawText
@@ -37,17 +39,19 @@ func (service *SmartImportService) SmartImport(params ImportParameters, authReco
 
 	vertexResponse, err := ExtractRecipe(rawRecipeText)
 	if err != nil {
-		// return errors.New("failed to retreive parsed recipe from vertex")
+		err = errors.New("failed to retreive parsed recipe from vertex")
+		service.UpdateFailureStatusOrLog(params, authRecord, err)
 		return
 	}
 	err = insertRecipe(service.app, vertexResponse, authRecord, params.ImportRecordId)
 	if err != nil {
-		// TODO log
+		service.UpdateFailureStatusOrLog(params, authRecord, err)
 		return
 	}
 }
 
-func insertRecipe(app *pocketbase.PocketBase, vertexResponse VertexResponse, authRecord *models.Record, importRecordId string) error {
+func insertRecipe(app *pocketbase.PocketBase,
+	vertexResponse VertexResponse, authRecord *models.Record, importRecordId string) error {
 	ingredientsCollection, err := app.Dao().FindCollectionByNameOrId("ingredients")
 	if err != nil {
 		return err
@@ -116,11 +120,21 @@ func insertRecipe(app *pocketbase.PocketBase, vertexResponse VertexResponse, aut
 	return err
 }
 
-// func (service *SmartImportService) updateFailureStatusOrLog(params ImportParameters, authRecord *models.Record, err error) {
-// 	smartImportRecord, err := service.app.Dao().FindRecordById("smartImports", importRecordId)
-// 	if err != nil {
-// 		return service.app.Logger().Error("failed to update ")
-// 	}
+func (service *SmartImportService) UpdateFailureStatusOrLog(
+	params ImportParameters, authRecord *models.Record, smartImportErr error) {
+	smartImportRecord, err := service.app.Dao().FindRecordById("smartImports", params.ImportRecordId)
+	if err != nil {
+		service.app.Logger().Error("failed to retrieve smartImport record after encountering an error",
+			"smartImport", params.ImportRecordId, "smartImportErr", smartImportErr, "err", err)
+		return
+	}
 
-// 	smartImportRecord.Set("status", SmartImportStatusSuccess)
-// }
+	smartImportRecord.Set("status", SmartImportStatusError)
+	smartImportRecord.Set("error", fmt.Sprintf("{\"error\": \"%s\"}", smartImportErr.Error()))
+	err = service.app.Dao().SaveRecord(smartImportRecord)
+	if err != nil {
+		service.app.Logger().Error("failed to update smartImport status after encountering an error",
+			"smartImport", params.ImportRecordId, "smartImportErr", smartImportErr, "err", err)
+		return
+	}
+}
