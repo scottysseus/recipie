@@ -1,8 +1,8 @@
 import PocketBase from "pocketbase";
-import { For, Show, createSignal } from "solid-js";
+import { Show, createSignal } from "solid-js";
 import { Loader } from "./Loader";
 import { usePocketBaseContext } from "./PocketBaseContext";
-import { Ingredient, Recipe } from "./recipe";
+import { Recipe } from "./recipe";
 
 function smartImport(
   pocketBase: PocketBase | undefined,
@@ -22,8 +22,41 @@ function smartImport(
 }
 
 export function SmartImport() {
+  const manager = new SmartImportManager();
+  return <RecipeEntry setBulkImportId={(id) => (manager.bulkImportId = id)} />;
+}
+
+enum SmartImportState {
+  RECIPE_ENTRY,
+  LOADING,
+  RECOVERING,
+  OVERVIEW,
+  EDIT_RECIPE,
+  CONFIRM,
+}
+
+class SmartImportManager {
+  bulkImportId = "";
+  isLoading = false;
+  recipes: Recipe[] = [];
+
+  getState() {
+    if (!this.bulkImportId) {
+      return SmartImportState.RECIPE_ENTRY;
+    }
+
+    if (this.isLoading) {
+      return SmartImportState.LOADING;
+    }
+  }
+}
+
+function RecipeEntry({
+  setBulkImportId,
+}: {
+  setBulkImportId: (id: string) => void;
+}) {
   const [recipeUrls, setRecipeUrls] = createSignal<string[]>([]);
-  const [recipe, setRecipe] = createSignal<Recipe | undefined>(undefined);
   const [isLoading, setIsLoading] = createSignal<boolean>(false);
   const pocketBase = usePocketBaseContext()!;
 
@@ -44,8 +77,10 @@ export function SmartImport() {
           smartImport(pocketBase(), recipeUrls())
             .then((resp: Response) => resp.json())
             .then((json) => {
-              setRecipe(json.recipes[0]);
+              setBulkImportId(json.id);
             })
+            // TODO handle errors here
+            .catch(() => {})
             .finally(() => {
               setIsLoading(false);
             });
@@ -53,9 +88,6 @@ export function SmartImport() {
       >
         Import
       </button>
-      <Show when={recipe() && !isLoading()}>
-        <RecipeSection recipe={recipe()!!} />
-      </Show>
       <Show
         when={isLoading()}
         fallback={<div class="progress-placeholder"></div>}
@@ -65,43 +97,5 @@ export function SmartImport() {
         </div>
       </Show>
     </div>
-  );
-}
-
-function RecipeSection({ recipe }: { recipe: Recipe }) {
-  return (
-    <div>
-      <p>
-        <b>{recipe.name}</b>
-      </p>
-      <br />
-      <p>Ingredients</p>
-      <Ingredients recipe={recipe} />
-    </div>
-  );
-}
-
-function Ingredients({ recipe }: { recipe: Recipe }) {
-  return (
-    <table>
-      <tbody>
-        <tr>
-          <th>Name</th>
-          <th>Quantity</th>
-          <th>Unit</th>
-          <th>Preparation</th>
-        </tr>
-        <For each={recipe.ingredients}>
-          {(ingredient: Ingredient) => (
-            <tr>
-              <td>{ingredient.name}</td>
-              <td>{ingredient.quantity}</td>
-              <td>{ingredient.unit}</td>
-              <td>{ingredient.preparation}</td>
-            </tr>
-          )}
-        </For>
-      </tbody>
-    </table>
   );
 }
