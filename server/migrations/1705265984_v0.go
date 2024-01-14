@@ -176,6 +176,12 @@ func initSchema(dao *daos.Dao) error {
 			Options: &schema.RelationOptions{
 				CollectionId: smartImportsCollection.Id,
 			},
+		}, &schema.SchemaField{
+			Name: "status",
+			Type: schema.FieldTypeSelect,
+			Options: &schema.SelectOptions{
+				Values: []string{"success", "error", "processing"},
+			},
 		}),
 		ListRule:   types.Pointer("@request.auth.id != ''"),
 		ViewRule:   types.Pointer("@request.auth.id != ''"),
