@@ -7,6 +7,9 @@ import (
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
+	"github.com/pocketbase/pocketbase/plugins/migratecmd"
+
+	_ "github.com/scottysseus/recipie/migrations"
 )
 
 // https://theinspiredhome.com/articles/authentic-street-tacos-for-tacotuesday/
@@ -14,13 +17,6 @@ import (
 
 func main() {
 	app := pocketbase.New()
-
-	app.OnBeforeServe().Add(func(e *core.ServeEvent) error {
-		if err := InitDb(app); err != nil {
-			return err
-		}
-		return nil
-	})
 
 	smartImportService := NewSmartImportService(app)
 	smartImportHandler := NewSmartImportHandler(app, smartImportService)
@@ -38,6 +34,8 @@ func main() {
 		}, apis.RequireRecordAuth())
 		return nil
 	})
+
+	migratecmd.MustRegister(app, app.RootCmd, migratecmd.Config{})
 
 	if err := app.Start(); err != nil {
 		log.Println("failed to start")

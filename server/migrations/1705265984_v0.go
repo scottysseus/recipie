@@ -1,17 +1,33 @@
-package main
+package migrations
 
 import (
 	"database/sql"
 
+	"github.com/pocketbase/pocketbase/daos"
 	"github.com/pocketbase/pocketbase/tools/types"
 
-	"github.com/pocketbase/pocketbase"
+	"github.com/pocketbase/dbx"
+	m "github.com/pocketbase/pocketbase/migrations"
 	"github.com/pocketbase/pocketbase/models"
 	"github.com/pocketbase/pocketbase/models/schema"
 )
 
-func InitDb(app *pocketbase.PocketBase) error {
-	userCollection, err := app.Dao().FindCollectionByNameOrId("users")
+func init() {
+	m.Register(func(db dbx.Builder) error {
+		// add up queries...
+
+		dao := daos.New(db)
+
+		return initSchema(dao)
+	}, func(db dbx.Builder) error {
+		// add down queries...
+
+		return nil
+	})
+}
+
+func initSchema(dao *daos.Dao) error {
+	userCollection, err := dao.FindCollectionByNameOrId("users")
 	if err != nil {
 		return err
 	}
@@ -47,7 +63,7 @@ func InitDb(app *pocketbase.PocketBase) error {
 		DeleteRule: types.Pointer("@request.auth.id != ''"),
 	}
 
-	if err = createIfNotExist(app, ingredientsCollection); err != nil {
+	if err = createIfNotExist(dao, ingredientsCollection); err != nil {
 		return err
 	}
 
@@ -90,7 +106,7 @@ func InitDb(app *pocketbase.PocketBase) error {
 		UpdateRule: types.Pointer("@request.auth.id != ''"),
 		DeleteRule: types.Pointer("@request.auth.id != ''"),
 	}
-	if err = createIfNotExist(app, recipesCollection); err != nil {
+	if err = createIfNotExist(dao, recipesCollection); err != nil {
 		return err
 	}
 
@@ -141,7 +157,7 @@ func InitDb(app *pocketbase.PocketBase) error {
 			CollectionId: smartImportsCollection.Id,
 		},
 	})
-	if err = createIfNotExist(app, smartImportsCollection); err != nil {
+	if err = createIfNotExist(dao, smartImportsCollection); err != nil {
 		return err
 	}
 
@@ -168,17 +184,17 @@ func InitDb(app *pocketbase.PocketBase) error {
 		DeleteRule: types.Pointer("@request.auth.id != ''"),
 	}
 
-	return createIfNotExist(app, bulkSmartImportsCollection)
+	return createIfNotExist(dao, bulkSmartImportsCollection)
 }
 
-func createIfNotExist(app *pocketbase.PocketBase, collection *models.Collection) error {
-	existingCollection, err := app.Dao().FindCollectionByNameOrId(collection.Name)
+func createIfNotExist(dao *daos.Dao, collection *models.Collection) error {
+	existingCollection, err := dao.FindCollectionByNameOrId(collection.Name)
 	if err != nil && err != sql.ErrNoRows {
 		return err
 	}
 
 	if existingCollection == nil {
-		if err := app.Dao().SaveCollection(collection); err != nil {
+		if err := dao.SaveCollection(collection); err != nil {
 			return err
 		}
 	}
