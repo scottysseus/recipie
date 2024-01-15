@@ -11,7 +11,8 @@
     "server": "./dist/recipie serve",
     "dev:client": "vite -c ./vite.config.ts ./client/",
     "build:client": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "gittree": "git log --oneline --graph --decorate --all"
   },
   "keywords": [],
   "author": "",
