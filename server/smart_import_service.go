@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/daos"
@@ -24,13 +23,17 @@ func NewSmartImportService(app *pocketbase.PocketBase) *SmartImportService {
 	return &SmartImportService{app: app}
 }
 
-func (service *SmartImportService) SmartImport(params ImportParameters, authRecord *models.Record) {
+// SmartImport attempts to import recipes from the given parameters, either a URL or raw text.
+// It sends a completion signal (true for success, false for error) to the completC channel.
+func (service *SmartImportService) SmartImport(params ImportParameters, authRecord *models.Record, completeC chan<- bool) {
+
 	var rawRecipeText string
 	var err error
 	if params.Url != "" {
 		rawRecipeText, err = ScrapeRecipe(params.Url)
 		if err != nil {
-			service.UpdateFailureStatusOrLog(params, authRecord, err)
+			UpdateImportFailureStatusOrLog(service.app, params.ImportRecordId, "smartImports", err)
+			completeC <- false
 			return
 		}
 	} else {
@@ -40,14 +43,19 @@ func (service *SmartImportService) SmartImport(params ImportParameters, authReco
 	vertexResponse, err := ExtractRecipe(rawRecipeText)
 	if err != nil {
 		err = errors.New("failed to retreive parsed recipe from vertex")
-		service.UpdateFailureStatusOrLog(params, authRecord, err)
+		UpdateImportFailureStatusOrLog(service.app, params.ImportRecordId, "smartImports", err)
+		completeC <- false
 		return
 	}
 	err = insertRecipe(service.app, vertexResponse, authRecord, params.ImportRecordId)
 	if err != nil {
-		service.UpdateFailureStatusOrLog(params, authRecord, err)
+		UpdateImportFailureStatusOrLog(service.app, params.ImportRecordId, "smartImports", err)
+		completeC <- false
 		return
 	}
+
+	// send a success signal to the channel
+	completeC <- true
 }
 
 func insertRecipe(app *pocketbase.PocketBase,
@@ -118,23 +126,4 @@ func insertRecipe(app *pocketbase.PocketBase,
 	})
 
 	return err
-}
-
-func (service *SmartImportService) UpdateFailureStatusOrLog(
-	params ImportParameters, authRecord *models.Record, smartImportErr error) {
-	smartImportRecord, err := service.app.Dao().FindRecordById("smartImports", params.ImportRecordId)
-	if err != nil {
-		service.app.Logger().Error("failed to retrieve smartImport record after encountering an error",
-			"smartImport", params.ImportRecordId, "smartImportErr", smartImportErr, "err", err)
-		return
-	}
-
-	smartImportRecord.Set("status", SmartImportStatusError)
-	smartImportRecord.Set("error", fmt.Sprintf("{\"error\": \"%s\"}", smartImportErr.Error()))
-	err = service.app.Dao().SaveRecord(smartImportRecord)
-	if err != nil {
-		service.app.Logger().Error("failed to update smartImport status after encountering an error",
-			"smartImport", params.ImportRecordId, "smartImportErr", smartImportErr, "err", err)
-		return
-	}
 }

@@ -182,6 +182,9 @@ func initSchema(dao *daos.Dao) error {
 			Options: &schema.SelectOptions{
 				Values: []string{"success", "error", "processing"},
 			},
+		}, &schema.SchemaField{
+			Name: "error",
+			Type: schema.FieldTypeJson,
 		}),
 		ListRule:   types.Pointer("@request.auth.id != ''"),
 		ViewRule:   types.Pointer("@request.auth.id != ''"),

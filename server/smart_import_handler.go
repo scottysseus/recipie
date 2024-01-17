@@ -1,8 +1,11 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"time"
 
 	"github.com/labstack/echo/v5"
 	"github.com/pocketbase/pocketbase"
@@ -32,6 +35,7 @@ const (
 	SmartImportErrorEmptyItem = "smartImport.emptyItem"
 	ErrorBadJson              = "common.badJson"
 	ErrorInternalDatabase     = "common.internal.database"
+	ErrorInternalTimeout      = "common.internal.timeout"
 )
 
 const (
@@ -82,6 +86,8 @@ func (handler *SmartImportHandler) SmartImport(reqCtx echo.Context, authRecord *
 		return reqCtx.JSON(500, &ErrorResponse{Code: ErrorInternalDatabase, Error: err.Error()})
 	}
 
+	completeC := make(chan bool, len(request.Items))
+
 	// now kick off all the smart imports
 	for i, item := range request.Items {
 		params := ImportParameters{Url: item.Url, RawText: item.RawText, ImportRecordId: importRecordIds[i]}
@@ -90,12 +96,15 @@ func (handler *SmartImportHandler) SmartImport(reqCtx echo.Context, authRecord *
 			if identifier == "" {
 				identifier = item.Url
 			}
-			handler.importService.UpdateFailureStatusOrLog(
-				params, authRecord, fmt.Errorf("no smartImports record for '%s'", identifier))
+			UpdateImportFailureStatusOrLog(handler.app,
+				importRecordIds[i], "smartImports", fmt.Errorf("no smartImports record for '%s'", identifier))
 			continue
 		}
-		go handler.importService.SmartImport(params, authRecord)
+		go handler.importService.SmartImport(params, authRecord, completeC)
 	}
+
+	ctx, _ := context.WithTimeout(context.Background(), time.Minute*15)
+	go handler.acceptSmartImportCompletions(ctx, bulkId, len(importRecordIds), completeC)
 
 	return reqCtx.JSON(200, &SmartImportResponse{Id: bulkId})
 
@@ -113,6 +122,7 @@ func (handler *SmartImportHandler) insertBulkSmartImport(
 	newRecord := models.NewRecord(bulkCollection)
 	newRecord.Set("creator", authRecord.Id)
 	newRecord.Set("imports", items)
+	newRecord.Set("status", SmartImportStatusProcessing)
 
 	return newRecord.Id, txDao.SaveRecord(newRecord)
 }
@@ -138,4 +148,41 @@ func (handler *SmartImportHandler) insertSmartImport(
 	err = txDao.SaveRecord(newRecord)
 	return newRecord.Id, err
 
+}
+
+func (handler *SmartImportHandler) acceptSmartImportCompletions(ctx context.Context, id string, numImports int, completeC <-chan bool) {
+	completeCount := 0
+	status := SmartImportStatusSuccess
+
+	for ; completeCount < numImports; completeCount++ {
+		select {
+		case result := <-completeC:
+			if !result {
+				status = SmartImportStatusError
+			}
+		case <-ctx.Done():
+			handler.updateBulkRecordOnCompletion(id, SmartImportStatusError, errors.New(ErrorInternalTimeout))
+			return
+		}
+	}
+
+	handler.updateBulkRecordOnCompletion(id, status, nil)
+}
+
+func (handler *SmartImportHandler) updateBulkRecordOnCompletion(id string, status string, importErr error) {
+	record, err := handler.app.Dao().FindRecordById("bulkSmartImports", id)
+	if err != nil {
+		UpdateImportFailureStatusOrLog(handler.app, id, "bulkSmartImports", err)
+		return
+	}
+
+	record.Set("status", status)
+	if importErr != nil {
+		record.Set("error", ErrorFieldValueFromError(importErr))
+	}
+	err = handler.app.Dao().SaveRecord(record)
+	if err != nil {
+		UpdateImportFailureStatusOrLog(handler.app, id, "bulkSmartImports", err)
+		return
+	}
 }

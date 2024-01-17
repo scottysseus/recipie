@@ -14,6 +14,7 @@ import (
 
 // https://theinspiredhome.com/articles/authentic-street-tacos-for-tacotuesday/
 // https://www.pillsbury.com/recipes/classic-chicken-pot-pie/1401d418-ac0b-4b50-ad09-c6f1243fb992
+// https://www.savethestudent.org/save-money/food-drink/6-delicious-recipes-you-can-make-with-baked-beans.html
 
 func main() {
 	app := pocketbase.New()
