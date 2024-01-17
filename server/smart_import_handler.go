@@ -103,8 +103,7 @@ func (handler *SmartImportHandler) SmartImport(reqCtx echo.Context, authRecord *
 		go handler.importService.SmartImport(params, authRecord, completeC)
 	}
 
-	ctx, _ := context.WithTimeout(context.Background(), time.Minute*15)
-	go handler.acceptSmartImportCompletions(ctx, bulkId, len(importRecordIds), completeC)
+	go handler.acceptSmartImportCompletions(bulkId, len(importRecordIds), completeC)
 
 	return reqCtx.JSON(200, &SmartImportResponse{Id: bulkId})
 
@@ -150,7 +149,9 @@ func (handler *SmartImportHandler) insertSmartImport(
 
 }
 
-func (handler *SmartImportHandler) acceptSmartImportCompletions(ctx context.Context, id string, numImports int, completeC <-chan bool) {
+func (handler *SmartImportHandler) acceptSmartImportCompletions(id string, numImports int, completeC <-chan bool) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute*15)
+	defer cancel()
 	completeCount := 0
 	status := SmartImportStatusSuccess
 
