@@ -1,7 +1,7 @@
 import Client from "pocketbase";
 import { Match, Switch, createSignal } from "solid-js";
 import { usePocketBaseContext } from "../PocketBaseContext";
-import { smartImportFromModel } from "../client/util";
+import { recipeFromModel, smartImportFromModel } from "../client/util";
 import { SmartImport } from "../model/recipe";
 import { LoadingInterstitial } from "./LoadingInterstitial";
 import { Overview } from "./Overview";
@@ -90,29 +90,32 @@ function fetchSmartImportResults(
         `id = "${ids[0]}"` + ids.map((id) => ` || id = "${id}"`),
       ),
     })
-    .then((smartImports) => {
+    .then((smartImportModels) => {
       return Promise.all(
-        smartImports.map((smartImport) =>
-          pocketBase.collection("recipes").getFullList({
-            filter: pocketBase.filter(
-              `id = "${smartImport.recipes[0]}"` +
-                smartImport.recipes.map((id: string) => ` || id = "${id}"`),
-            ),
-          }),
+        smartImportModels.map((smartImportModel) =>
+          pocketBase
+            .collection("recipes")
+            .getFullList({
+              filter: pocketBase.filter(
+                `id = "${smartImportModel.recipes[0]}"` +
+                  smartImportModel.recipes.map(
+                    (id: string) => ` || id = "${id}"`,
+                  ),
+              ),
+            })
+            .then((recipes) => {
+              const smartImport = smartImportFromModel(smartImportModel);
+              smartImport.recipes = recipes.map(recipeFromModel);
+              return smartImport;
+            }),
         ),
       );
     })
-    .then((recipesPerImport) => {
-      onImportFinished(
-        finishProcessingImport(
-          props,
-          recipesPerImport
-            .reduce(function (elem1, elem2) {
-              return elem1.concat(elem2);
-            })
-            .map(smartImportFromModel),
-        ),
-      );
+    .then((smartImports) => {
+      onImportFinished(finishProcessingImport(props, smartImports));
+    })
+    .catch((err) => {
+      console.log(err);
     });
 }
 

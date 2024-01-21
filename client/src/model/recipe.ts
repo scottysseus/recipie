@@ -18,5 +18,5 @@ export interface SmartImport {
   url: string;
   rawText: string;
   error: any;
-  recipe: Recipe;
+  recipes: Recipe[];
 }

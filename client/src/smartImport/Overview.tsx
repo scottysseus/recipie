@@ -8,7 +8,10 @@ export function Overview({ smartImports }: { smartImports: SmartImport[] }) {
         sections={{
           Succeeded: smartImports
             .filter((smartImport) => smartImport.status === "success")
-            .map((smartImport) => smartImport.recipe),
+            .map((smartImport) => smartImport.recipes)
+            .reduce(function (elem1, elem2) {
+              return elem1.concat(elem2);
+            }),
         }}
       />
     </>
