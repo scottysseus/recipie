@@ -9,7 +9,7 @@ import { Landing } from "./Landing";
 import { PocketBaseContextProvider } from "./PocketBaseContext";
 import { SignIn } from "./SignIn";
 import "./index.css";
-import { SmartImport } from "./smartImport/SmartImport";
+import { SmartImportWizard } from "./smartImport/SmartImportWizard";
 
 const root = document.getElementById("root");
 
@@ -22,7 +22,7 @@ render(
             <Route path="/" component={Greeting} />
             <Route path="/app" component={AppContainer}>
               <Route path="/" component={Landing} />
-              <Route path="/smartImport" component={SmartImport} />
+              <Route path="/smartImport" component={SmartImportWizard} />
             </Route>
             <Route path="/signin" component={SignIn} />
           </Router>

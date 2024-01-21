@@ -22,11 +22,8 @@ export function AuthContextProvider(props: ParentProps) {
   const pocketBase = usePocketBaseContext()!;
 
   const signOut = () => {
-    const pb = pocketBase();
-    if (pb) {
-      pb.authStore.clear();
-      setAuthData(undefined);
-    }
+    pocketBase().authStore.clear();
+    setAuthData(undefined);
   };
 
   return (

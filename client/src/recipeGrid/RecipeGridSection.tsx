@@ -15,7 +15,7 @@ export function RecipeGridSection({
         <p class="mr-8">{name}</p>
         <hr class="w-full border-black" color="black"></hr>
       </div>
-      <div class="grid grid-flow-row">
+      <div class="grid grid-cols-4 gap-2">
         <For each={recipes}>
           {(recipe) => (
             <div class="mb-2">

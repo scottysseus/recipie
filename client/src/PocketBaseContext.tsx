@@ -9,12 +9,10 @@ import {
 
 const pb = new PocketBase("http://localhost:8090");
 
-const PocketBaseContext = createContext<Accessor<PocketBase | undefined>>();
+const PocketBaseContext = createContext<Accessor<PocketBase>>();
 
 export function PocketBaseContextProvider(props: ParentProps) {
-  const [pocketBase, setPocketBase] = createSignal<PocketBase | undefined>(
-    undefined,
-  );
+  const [pocketBase, setPocketBase] = createSignal<PocketBase>(pb);
 
   setPocketBase(pb);
 

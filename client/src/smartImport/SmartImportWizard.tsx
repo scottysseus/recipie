@@ -1,12 +1,13 @@
 import Client from "pocketbase";
 import { Match, Switch, createSignal } from "solid-js";
 import { usePocketBaseContext } from "../PocketBaseContext";
-import { Recipe } from "../model/recipe";
+import { smartImportFromModel } from "../client/util";
+import { SmartImport } from "../model/recipe";
 import { LoadingInterstitial } from "./LoadingInterstitial";
 import { Overview } from "./Overview";
 import { RecipeEntry } from "./RecipeEntry";
 
-export function SmartImport() {
+export function SmartImportWizard() {
   const [stateProps, setStateProps] = createSignal(
     getDefaultSmartImportStateProps(),
   );
@@ -28,7 +29,7 @@ export function SmartImport() {
         <LoadingInterstitial />
       </Match>
       <Match when={getState(stateProps()) === SmartImportState.OVERVIEW}>
-        <Overview successes={[]} failures={[]} error={""} />
+        <Overview smartImports={stateProps().smartImports} />
       </Match>
     </Switch>
   );
@@ -45,7 +46,7 @@ enum SmartImportState {
 interface SmartImportStateProps {
   bulkImportId: string;
   isLoading: boolean;
-  recipes: Recipe[];
+  smartImports: SmartImport[];
   error: string;
 }
 
@@ -53,7 +54,7 @@ function getDefaultSmartImportStateProps(): SmartImportStateProps {
   return {
     bulkImportId: "",
     isLoading: false,
-    recipes: [],
+    smartImports: [],
     error: "",
   };
 }
@@ -63,7 +64,7 @@ function getState(props: SmartImportStateProps): SmartImportState {
     return SmartImportState.LOADING;
   }
 
-  if (!props.isLoading && props.bulkImportId) {
+  if (!props.isLoading && props.bulkImportId && props.smartImports.length > 0) {
     return SmartImportState.OVERVIEW;
   }
   return SmartImportState.RECIPE_ENTRY;
@@ -76,14 +77,53 @@ function startProcessingImport(
   return Object.assign({}, props, { bulkImportId, isLoading: true });
 }
 
+function fetchSmartImportResults(
+  pocketBase: Client,
+  ids: string[],
+  props: SmartImportStateProps,
+  onImportFinished: (props: SmartImportStateProps) => void,
+) {
+  pocketBase
+    .collection("smartImports")
+    .getFullList({
+      filter: pocketBase.filter(
+        `id = "${ids[0]}"` + ids.map((id) => ` || id = "${id}"`),
+      ),
+    })
+    .then((smartImports) => {
+      return Promise.all(
+        smartImports.map((smartImport) =>
+          pocketBase.collection("recipes").getFullList({
+            filter: pocketBase.filter(
+              `id = "${smartImport.recipes[0]}"` +
+                smartImport.recipes.map((id: string) => ` || id = "${id}"`),
+            ),
+          }),
+        ),
+      );
+    })
+    .then((recipesPerImport) => {
+      onImportFinished(
+        finishProcessingImport(
+          props,
+          recipesPerImport
+            .reduce(function (elem1, elem2) {
+              return elem1.concat(elem2);
+            })
+            .map(smartImportFromModel),
+        ),
+      );
+    });
+}
+
 function finishProcessingImport(
   props: SmartImportStateProps,
-  success: boolean,
+  smartImports: SmartImport[],
 ) {
   // TODO handle success = false here
   return Object.assign({}, props, {
     isLoading: false,
-    error: success ? "" : "an error was encountered",
+    smartImports,
   });
 }
 
@@ -102,8 +142,11 @@ function subscribeToBulkSmartImport(
         event.record.status === "success" ||
         event.record.status === "error"
       ) {
-        onImportFinished(
-          finishProcessingImport(props, event.record.status === "success"),
+        fetchSmartImportResults(
+          pocketBase,
+          event.record.imports,
+          props,
+          onImportFinished,
         );
       }
     });

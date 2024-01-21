@@ -9,17 +9,19 @@ import { RecipeGrid } from "./recipeGrid/RecipeGrid";
 export function Landing() {
   const pocketBase = usePocketBaseContext()!;
   const [authData] = useAuthContext()!;
-  const [recipes, setRecipes] = createSignal<Recipe[]>([]);
+  const [drafts, setDrafts] = createSignal<Recipe[]>([]);
   const [isLoading, setIsLoading] = createSignal(true);
 
   createEffect(() => {
     pocketBase()
-      ?.collection("recipes")
-      .getList(1, 2, {
-        filter: pocketBase()?.filter(`creator = "${authData()?.id}"`),
+      .collection("recipes")
+      .getList(1, 12, {
+        filter: pocketBase().filter(
+          `creator = "${authData()?.id}" && isDraft = true`,
+        ),
       })
       .then((result) => {
-        setRecipes(result.items.map(recipeFromModel));
+        setDrafts(result.items.map(recipeFromModel));
       })
       .finally(() => setIsLoading(false));
   });
@@ -33,7 +35,7 @@ export function Landing() {
         </div>
       }
     >
-      <RecipeGrid sections={{ Drafts: recipes() }} />
+      <RecipeGrid sections={{ Drafts: drafts() }} />
     </Show>
   );
 }
