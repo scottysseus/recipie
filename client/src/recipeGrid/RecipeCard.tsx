@@ -1,6 +1,6 @@
-import { RecordModel } from "pocketbase";
+import { Recipe } from "../model/recipe";
 
-export function RecipeCard({ recipe }: { recipe: RecordModel }) {
+export function RecipeCard({ recipe }: { recipe: Recipe }) {
   return (
     <div class="max-w-xs border border-black p-2">
       <h1 class="mb-2 text-sm">{recipe.name}</h1>

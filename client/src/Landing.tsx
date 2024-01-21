@@ -1,21 +1,39 @@
-import { useNavigate } from "@solidjs/router";
-import { createEffect } from "solid-js";
+import { Show, createEffect, createSignal } from "solid-js";
 import { useAuthContext } from "./AuthContext";
+import { Loader } from "./Loader";
+import { usePocketBaseContext } from "./PocketBaseContext";
+import { recipeFromModel } from "./client/util";
+import { Recipe } from "./model/recipe";
+import { RecipeGrid } from "./recipeGrid/RecipeGrid";
 
 export function Landing() {
+  const pocketBase = usePocketBaseContext()!;
   const [authData] = useAuthContext()!;
-  const navigate = useNavigate();
+  const [recipes, setRecipes] = createSignal<Recipe[]>([]);
+  const [isLoading, setIsLoading] = createSignal(true);
 
   createEffect(() => {
-    if (authData()) {
-      navigate("/app");
-    }
+    pocketBase()
+      ?.collection("recipes")
+      .getList(1, 2, {
+        filter: pocketBase()?.filter(`creator = "${authData()?.id}"`),
+      })
+      .then((result) => {
+        setRecipes(result.items.map(recipeFromModel));
+      })
+      .finally(() => setIsLoading(false));
   });
 
   return (
-    <div class="p-24 text-center">
-      <h1 class="mb-3 text-2xl">Welcome to Recipie</h1>
-      <p>Sign in to get started</p>
-    </div>
+    <Show
+      when={!isLoading()}
+      fallback={
+        <div class="flex justify-center">
+          <Loader />
+        </div>
+      }
+    >
+      <RecipeGrid sections={{ Drafts: recipes() }} />
+    </Show>
   );
 }
