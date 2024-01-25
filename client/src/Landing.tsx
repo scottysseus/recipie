@@ -1,4 +1,5 @@
 import { Show, createEffect, createSignal } from "solid-js";
+import { ActionBar } from "./ActionBar";
 import { useAuthContext } from "./AuthContext";
 import { Loader } from "./Loader";
 import { usePocketBaseContext } from "./PocketBaseContext";
@@ -27,15 +28,22 @@ export function Landing() {
   });
 
   return (
-    <Show
-      when={!isLoading()}
-      fallback={
-        <div class="flex justify-center">
-          <Loader />
-        </div>
-      }
-    >
-      <RecipeGrid sections={{ Drafts: drafts() }} />
-    </Show>
+    <>
+      <ActionBar>
+        <a class="hover:underline" href="/app/bulkSmartImports/new">
+          + New Recipe
+        </a>
+      </ActionBar>
+      <Show
+        when={!isLoading()}
+        fallback={
+          <div class="flex justify-center">
+            <Loader />
+          </div>
+        }
+      >
+        <RecipeGrid sections={{ Drafts: drafts() }} />
+      </Show>
+    </>
   );
 }
