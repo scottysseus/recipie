@@ -1,10 +1,12 @@
 import { useParams } from "@solidjs/router";
-import Client from "pocketbase";
+import Client, { RecordModel } from "pocketbase";
 import { Show, createEffect, createSignal } from "solid-js";
 import { usePocketBaseContext } from "../PocketBaseContext";
-import { recipeFromModel, smartImportFromModel } from "../client/util";
+import { smartImportFromModel } from "../client/util";
+import { Grid } from "../grid/Grid";
+import { RecipeCard } from "../grid/RecipeCard";
+import { SmartImportErrorCard } from "../grid/SmartImportErrorCard";
 import { SmartImport } from "../model/recipe";
-import { RecipeGrid } from "../recipeGrid/RecipeGrid";
 import { LoadingInterstitial } from "./LoadingInterstitial";
 
 export function BulkSmartImport() {
@@ -15,7 +17,7 @@ export function BulkSmartImport() {
 
   createEffect(() => {
     if (pocketBase && params && params.id) {
-      subscribeToBulkSmartImport(
+      getBulkImportOrSubscribe(
         pocketBase(),
         params.id,
         (smartImports) => {
@@ -36,25 +38,36 @@ export function BulkSmartImport() {
       when={!isLoading() && smartImports().length > 0}
       fallback={<LoadingInterstitial />}
     >
-      <RecipeGrid
+      <Grid
         sections={{
           Succeeded: smartImports()
             .filter((smartImport) => smartImport.status === "success")
             .map((smartImport) => smartImport.recipes)
             .reduce(function (elem1, elem2) {
               return elem1.concat(elem2);
-            }),
+            })
+            .map((recipe) => <RecipeCard recipe={recipe} />),
+          Failed: smartImports()
+            .filter((smartImport) => smartImport.status === "error")
+            .map((smartImport) => (
+              <SmartImportErrorCard smartImport={smartImport} />
+            )),
         }}
       />
     </Show>
   );
 }
 
-function subscribeToBulkSmartImport(
+/**
+ * For the given bulkImportId, attempt to fetch it, all of its smartImports, and all of their recipes.
+ * If its status indicates it is still in progress, subscribe to it and wait until it completes.
+ * Once the bulkImport and its smartImports and their recipes have been fetched, pass the data to the success callback.
+ */
+function getBulkImportOrSubscribe(
   pocketBase: Client,
   bulkImportId: string,
-  onImportFinished: (smartImports: SmartImport[]) => void,
-  onImportError: (error: Error) => void,
+  onBulkImportLoadSuccess: (smartImports: SmartImport[]) => void,
+  onBulkImportLoadError: (error: Error) => void,
 ) {
   pocketBase
     .collection("bulkSmartImports")
@@ -63,7 +76,7 @@ function subscribeToBulkSmartImport(
       if (bulkImportModel.status === "processing") {
         setTimeout(() => {
           pocketBase.collection("bulkSmartImports").unsubscribe(bulkImportId);
-          onImportError(new Error("timeout"));
+          onBulkImportLoadError(new Error("timeout"));
         }, 90000);
         pocketBase
           .collection("bulkSmartImports")
@@ -75,8 +88,8 @@ function subscribeToBulkSmartImport(
               fetchSmartImportResults(
                 pocketBase,
                 event.record.imports,
-                onImportFinished,
-                onImportError,
+                onBulkImportLoadSuccess,
+                onBulkImportLoadError,
               );
             }
           });
@@ -84,8 +97,8 @@ function subscribeToBulkSmartImport(
         fetchSmartImportResults(
           pocketBase,
           bulkImportModel.imports,
-          onImportFinished,
-          onImportError,
+          onBulkImportLoadSuccess,
+          onBulkImportLoadError,
         );
       }
     });
@@ -93,47 +106,62 @@ function subscribeToBulkSmartImport(
 
 function fetchSmartImportResults(
   pocketBase: Client,
-  ids: string[],
-  onImportFinished: (smartImports: SmartImport[]) => void,
-  onImportError: (error: Error) => void,
+  smartImportIds: string[],
+  onBulkImportLoadSuccess: (smartImports: SmartImport[]) => void,
+  onBulkImportLoadError: (error: Error) => void,
 ) {
-  const filterString =
-    `id = "${ids[0]}"` + ids.map((id) => ` || id = "${id}"`).join(" ");
+  // get all of the smartImports with the given IDs
+  const smartImportFilterString =
+    `id = "${smartImportIds[0]}"` +
+    smartImportIds.map((id) => ` || id = "${id}"`).join(" ");
   pocketBase
     .collection("smartImports")
     .getFullList({
-      filter: pocketBase.filter(filterString),
+      filter: pocketBase.filter(smartImportFilterString),
     })
     .then((smartImportModels) => {
-      return Promise.all(
-        smartImportModels
-          .filter(
-            (smartImportModel) =>
-              smartImportModel.recipes && smartImportModel.recipes.length > 0,
-          )
-          .map((smartImportModel) => {
-            return pocketBase
-              .collection("recipes")
-              .getFullList({
-                filter: pocketBase.filter(
-                  `id = "${smartImportModel.recipes[0]}"` +
-                    smartImportModel.recipes
-                      .map((id: string) => ` || id = "${id}"`)
-                      .join(" "),
-                ),
-              })
-              .then((recipes) => {
-                const smartImport = smartImportFromModel(smartImportModel);
-                smartImport.recipes = recipes.map(recipeFromModel);
-                return smartImport;
-              });
-          }),
-      );
+      const recipeIds = smartImportModels
+        .filter(
+          (smartImportModel) =>
+            smartImportModel.recipes && smartImportModel.recipes.length > 0,
+        )
+        .map((smartImportModel) => smartImportModel.recipes);
+
+      const recipeFilter = recipeIds.map((id) => `id = "${id}"`).join(" || ");
+
+      // get all of their recipes
+      return Promise.all([
+        Promise.resolve(smartImportModels),
+        pocketBase.collection("recipes").getFullList({
+          filter: pocketBase.filter(recipeFilter),
+        }),
+      ]);
+    })
+    .then(([smartImportModels, recipes]) => {
+      // hydrate the smartImport objects with the recipe data
+      const recipeMap = recipeModelListToMap(recipes);
+      const smartImports = smartImportModels.map((smartImportModel) => {
+        const smartImport = smartImportFromModel(smartImportModel);
+        smartImport.recipes = smartImportModel.recipes.map(
+          (recipeId: string) => recipeMap[recipeId],
+        );
+        return smartImport;
+      });
+
+      return smartImports;
     })
     .then((smartImports) => {
-      onImportFinished(smartImports);
+      onBulkImportLoadSuccess(smartImports);
     })
     .catch((err) => {
-      onImportError(err);
+      onBulkImportLoadError(err);
     });
+}
+
+function recipeModelListToMap(recipes: RecordModel[]) {
+  const map: { [key: string]: RecordModel } = {};
+  for (const recipe of recipes) {
+    map[recipe.id] = recipe;
+  }
+  return map;
 }

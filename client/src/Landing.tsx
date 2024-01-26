@@ -4,8 +4,9 @@ import { useAuthContext } from "./AuthContext";
 import { Loader } from "./Loader";
 import { usePocketBaseContext } from "./PocketBaseContext";
 import { recipeFromModel } from "./client/util";
+import { Grid } from "./grid/Grid";
+import { RecipeCard } from "./grid/RecipeCard";
 import { Recipe } from "./model/recipe";
-import { RecipeGrid } from "./recipeGrid/RecipeGrid";
 
 export function Landing() {
   const pocketBase = usePocketBaseContext()!;
@@ -42,7 +43,11 @@ export function Landing() {
           </div>
         }
       >
-        <RecipeGrid sections={{ Drafts: drafts() }} />
+        <Grid
+          sections={{
+            Drafts: drafts().map((draft) => <RecipeCard recipe={draft} />),
+          }}
+        />
       </Show>
     </>
   );

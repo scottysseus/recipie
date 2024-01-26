@@ -14,6 +14,7 @@ export interface Ingredient {
 }
 
 export interface SmartImport {
+  id: string;
   status: "success" | "processing" | "error";
   url: string;
   rawText: string;
