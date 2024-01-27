@@ -1,6 +1,6 @@
 import { For } from "solid-js";
-import { toLocalizedDateTimeString } from "./lead/util";
-import { Ingredient, Recipe as RecipeRecord } from "./model/model";
+import { toLocalizedDateTimeString } from "../../lead/util";
+import { Ingredient, Recipe as RecipeRecord } from "../../model/model";
 
 export function Recipe({ recipe }: { recipe: RecipeRecord }) {
   return (

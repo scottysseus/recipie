@@ -1,7 +1,7 @@
 import { Show } from "solid-js";
-import { Card } from "../grid/Card";
-import { toLocalizedDateTimeString } from "../lead/util";
-import { BulkSmartImport } from "../model/model";
+import { Card } from "src/components/grid/Card";
+import { toLocalizedDateTimeString } from "src/lead/util";
+import { BulkSmartImport } from "src/model/model";
 
 export function BulkSmartImportCard({
   bulkSmartImport,

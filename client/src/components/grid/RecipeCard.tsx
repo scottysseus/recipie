@@ -1,5 +1,5 @@
-import { Recipe } from "../model/model";
-import { Card } from "./Card";
+import { Card } from "src/components/grid/Card";
+import { Recipe } from "src/model/model";
 
 export function RecipeCard({ recipe, path }: { recipe: Recipe; path: string }) {
   return (

@@ -1,4 +1,4 @@
-import { Loader } from "../Loader";
+import { Loader } from "src/components/common/Loader";
 
 export function LoadingInterstitial() {
   return (

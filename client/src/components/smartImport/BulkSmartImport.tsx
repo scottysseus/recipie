@@ -1,21 +1,21 @@
 import { useParams } from "@solidjs/router";
 import Client, { RecordModel } from "pocketbase";
 import { Show, createEffect, createSignal } from "solid-js";
-import { ActionBar } from "../ActionBar";
-import { usePocketBaseContext } from "../PocketBaseContext";
-import { Grid } from "../grid/Grid";
-import { RecipeCard } from "../grid/RecipeCard";
+import { usePocketBaseContext } from "src/PocketBaseContext";
+import { ActionBar } from "src/components/common/ActionBar";
+import { Grid } from "src/components/grid/Grid";
+import { RecipeCard } from "src/components/grid/RecipeCard";
+import { LoadingInterstitial } from "src/components/smartImport/LoadingInterstitial";
+import { SmartImportErrorCard } from "src/components/smartImport/SmartImportErrorCard";
 import {
   bulkSmartImportFromModel,
   smartImportFromModel,
   toLocalizedDateTimeString,
-} from "../lead/util";
+} from "src/lead/util";
 import {
   BulkSmartImport as BulkSmartImportRecord,
   SmartImport,
-} from "../model/model";
-import { LoadingInterstitial } from "./LoadingInterstitial";
-import { SmartImportErrorCard } from "./SmartImportErrorCard";
+} from "src/model/model";
 
 export function BulkSmartImport() {
   const params = useParams();

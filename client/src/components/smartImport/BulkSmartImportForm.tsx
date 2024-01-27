@@ -1,8 +1,8 @@
 import { useNavigate } from "@solidjs/router";
 import PocketBase from "pocketbase";
 import { createSignal } from "solid-js";
-import { ActionBar } from "../ActionBar";
-import { usePocketBaseContext } from "../PocketBaseContext";
+import { ActionBar } from "src/components/common/ActionBar";
+import { usePocketBaseContext } from "src/PocketBaseContext";
 
 export function BulkSmartImportForm() {
   const navigate = useNavigate();

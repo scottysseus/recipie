@@ -1,5 +1,5 @@
 import { For, JSX, Show } from "solid-js";
-import { GridSection } from "./GridSection";
+import { GridSection } from "src/components/grid/GridSection";
 
 export type GridData = { [key: string]: JSX.Element[] };
 

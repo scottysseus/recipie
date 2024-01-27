@@ -7,10 +7,10 @@ import { Greeting } from "./Greeting";
 import { Landing } from "./Landing";
 import { PocketBaseContextProvider } from "./PocketBaseContext";
 import { SignIn } from "./SignIn";
+import { BulkSmartImport } from "./components/smartImport/BulkSmartImport";
+import { BulkSmartImportForm } from "./components/smartImport/BulkSmartImportForm";
+import { SmartImportRecipe } from "./components/smartImport/SmartImportRecipe";
 import "./index.css";
-import { BulkSmartImport } from "./smartImport/BulkSmartImport";
-import { BulkSmartImportForm } from "./smartImport/BulkSmartImportForm";
-import { SmartImportRecipe } from "./smartImport/SmartImportRecipe";
 
 const root = document.getElementById("root");
 
