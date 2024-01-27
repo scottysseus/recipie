@@ -21,3 +21,10 @@ export interface SmartImport {
   error: any;
   recipes: Recipe[];
 }
+
+export interface BulkSmartImport {
+  id: string;
+  imports: string[];
+  status: "success" | "processing" | "error";
+  created: string;
+}

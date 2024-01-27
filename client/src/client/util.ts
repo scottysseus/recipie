@@ -1,5 +1,5 @@
 import { RecordModel } from "pocketbase";
-import { Recipe, SmartImport } from "../model/recipe";
+import { BulkSmartImport, Recipe, SmartImport } from "../model/recipe";
 
 export function recipeFromModel(model: RecordModel): Recipe {
   return model as unknown as Recipe;
@@ -7,4 +7,8 @@ export function recipeFromModel(model: RecordModel): Recipe {
 
 export function smartImportFromModel(model: RecordModel): SmartImport {
   return model as unknown as SmartImport;
+}
+
+export function bulkSmartImportFromModel(model: RecordModel): BulkSmartImport {
+  return model as unknown as BulkSmartImport;
 }

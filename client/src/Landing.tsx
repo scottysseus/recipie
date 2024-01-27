@@ -3,27 +3,25 @@ import { ActionBar } from "./ActionBar";
 import { useAuthContext } from "./AuthContext";
 import { Loader } from "./Loader";
 import { usePocketBaseContext } from "./PocketBaseContext";
-import { recipeFromModel } from "./client/util";
+import { bulkSmartImportFromModel } from "./client/util";
+import { BulkSmartImportCard } from "./grid/BulkImportCard";
 import { Grid } from "./grid/Grid";
-import { RecipeCard } from "./grid/RecipeCard";
-import { Recipe } from "./model/recipe";
+import { BulkSmartImport } from "./model/recipe";
 
 export function Landing() {
   const pocketBase = usePocketBaseContext()!;
   const [authData] = useAuthContext()!;
-  const [drafts, setDrafts] = createSignal<Recipe[]>([]);
+  const [drafts, setDrafts] = createSignal<BulkSmartImport[]>([]);
   const [isLoading, setIsLoading] = createSignal(true);
 
   createEffect(() => {
     pocketBase()
-      .collection("recipes")
+      .collection("bulkSmartImports")
       .getList(1, 12, {
-        filter: pocketBase().filter(
-          `creator = "${authData()?.id}" && isDraft = true`,
-        ),
+        filter: pocketBase().filter(`creator = "${authData()?.id}"`),
       })
       .then((result) => {
-        setDrafts(result.items.map(recipeFromModel));
+        setDrafts(result.items.map(bulkSmartImportFromModel));
       })
       .finally(() => setIsLoading(false));
   });
@@ -45,7 +43,9 @@ export function Landing() {
       >
         <Grid
           sections={{
-            Drafts: drafts().map((draft) => <RecipeCard recipe={draft} />),
+            "Draft Imports": drafts().map((draft) => (
+              <BulkSmartImportCard bulkSmartImport={draft} />
+            )),
           }}
         />
       </Show>
