@@ -1,17 +1,24 @@
 import { useParams } from "@solidjs/router";
 import Client, { RecordModel } from "pocketbase";
 import { Show, createEffect, createSignal } from "solid-js";
+import { ActionBar } from "../ActionBar";
 import { usePocketBaseContext } from "../PocketBaseContext";
-import { smartImportFromModel } from "../client/util";
+import { bulkSmartImportFromModel, smartImportFromModel } from "../client/util";
 import { Grid } from "../grid/Grid";
 import { RecipeCard } from "../grid/RecipeCard";
 import { SmartImportErrorCard } from "../grid/SmartImportErrorCard";
-import { SmartImport } from "../model/recipe";
+import {
+  BulkSmartImport as BulkSmartImportRecord,
+  SmartImport,
+} from "../model/recipe";
 import { LoadingInterstitial } from "./LoadingInterstitial";
 
 export function BulkSmartImport() {
   const params = useParams();
   const pocketBase = usePocketBaseContext();
+  const [bulkImport, setBulkImport] = createSignal<
+    BulkSmartImportRecord | undefined
+  >();
   const [smartImports, setSmartImports] = createSignal<SmartImport[]>([]);
   const [isLoading, setIsLoading] = createSignal(true);
 
@@ -20,6 +27,7 @@ export function BulkSmartImport() {
       getBulkImportOrSubscribe(
         pocketBase(),
         params.id,
+        (bulkSmartImport) => setBulkImport(bulkSmartImport),
         (smartImports) => {
           setSmartImports(smartImports);
           setIsLoading(false);
@@ -38,6 +46,15 @@ export function BulkSmartImport() {
       when={!isLoading() && smartImports().length > 0}
       fallback={<LoadingInterstitial />}
     >
+      <ActionBar>
+        <a class="hover:underline" href="/app">
+          Back
+        </a>
+      </ActionBar>
+      <h1 class="mb-2 text-2xl">{params.id}</h1>
+      <h2 class="mb-8 text-gray-400">
+        Bulk Smart Import from {bulkImport()?.created}
+      </h2>
       <Grid
         sections={{
           Succeeded: smartImports()
@@ -66,17 +83,19 @@ export function BulkSmartImport() {
 function getBulkImportOrSubscribe(
   pocketBase: Client,
   bulkImportId: string,
-  onBulkImportLoadSuccess: (smartImports: SmartImport[]) => void,
-  onBulkImportLoadError: (error: Error) => void,
+  onBulkImportLoadSuccess: (bulkSmartImport: BulkSmartImportRecord) => void,
+  onSmartImportLoadSuccess: (smartImports: SmartImport[]) => void,
+  onError: (error: Error) => void,
 ) {
   pocketBase
     .collection("bulkSmartImports")
     .getFirstListItem(pocketBase.filter(`id = "${bulkImportId}"`))
     .then((bulkImportModel) => {
+      onBulkImportLoadSuccess(bulkSmartImportFromModel(bulkImportModel));
       if (bulkImportModel.status === "processing") {
         setTimeout(() => {
           pocketBase.collection("bulkSmartImports").unsubscribe(bulkImportId);
-          onBulkImportLoadError(new Error("timeout"));
+          onError(new Error("timeout"));
         }, 90000);
         pocketBase
           .collection("bulkSmartImports")
@@ -88,8 +107,8 @@ function getBulkImportOrSubscribe(
               fetchSmartImportResults(
                 pocketBase,
                 event.record.imports,
-                onBulkImportLoadSuccess,
-                onBulkImportLoadError,
+                onSmartImportLoadSuccess,
+                onError,
               );
             }
           });
@@ -97,8 +116,8 @@ function getBulkImportOrSubscribe(
         fetchSmartImportResults(
           pocketBase,
           bulkImportModel.imports,
-          onBulkImportLoadSuccess,
-          onBulkImportLoadError,
+          onSmartImportLoadSuccess,
+          onError,
         );
       }
     });
@@ -107,8 +126,8 @@ function getBulkImportOrSubscribe(
 function fetchSmartImportResults(
   pocketBase: Client,
   smartImportIds: string[],
-  onBulkImportLoadSuccess: (smartImports: SmartImport[]) => void,
-  onBulkImportLoadError: (error: Error) => void,
+  onSmartImportLoadSuccess: (smartImports: SmartImport[]) => void,
+  onError: (error: Error) => void,
 ) {
   // get all of the smartImports with the given IDs
   const smartImportFilterString =
@@ -151,10 +170,10 @@ function fetchSmartImportResults(
       return smartImports;
     })
     .then((smartImports) => {
-      onBulkImportLoadSuccess(smartImports);
+      onSmartImportLoadSuccess(smartImports);
     })
     .catch((err) => {
-      onBulkImportLoadError(err);
+      onError(err);
     });
 }
 
