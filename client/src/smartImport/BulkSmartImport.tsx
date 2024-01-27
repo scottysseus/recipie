@@ -3,7 +3,11 @@ import Client, { RecordModel } from "pocketbase";
 import { Show, createEffect, createSignal } from "solid-js";
 import { ActionBar } from "../ActionBar";
 import { usePocketBaseContext } from "../PocketBaseContext";
-import { bulkSmartImportFromModel, smartImportFromModel } from "../client/util";
+import {
+  bulkSmartImportFromModel,
+  smartImportFromModel,
+  toLocalizedDateTimeString,
+} from "../client/util";
 import { Grid } from "../grid/Grid";
 import { RecipeCard } from "../grid/RecipeCard";
 import { SmartImportErrorCard } from "../grid/SmartImportErrorCard";
@@ -51,10 +55,13 @@ export function BulkSmartImport() {
           Back
         </a>
       </ActionBar>
+      <p class="mb-2 text-gray-400">Bulk Smart Import</p>
       <h1 class="mb-2 text-2xl">{params.id}</h1>
-      <h2 class="mb-8 text-gray-400">
-        Bulk Smart Import from {bulkImport()?.created}
-      </h2>
+      <Show when={bulkImport()?.created}>
+        <h2 class="mb-8 text-gray-400">
+          from {toLocalizedDateTimeString(bulkImport()?.created!)}
+        </h2>
+      </Show>
       <Grid
         sections={{
           Succeeded: smartImports()
