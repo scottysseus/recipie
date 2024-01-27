@@ -3,10 +3,10 @@ import { ActionBar } from "./ActionBar";
 import { useAuthContext } from "./AuthContext";
 import { Loader } from "./Loader";
 import { usePocketBaseContext } from "./PocketBaseContext";
-import { bulkSmartImportFromModel } from "./client/util";
-import { BulkSmartImportCard } from "./grid/BulkImportCard";
 import { Grid } from "./grid/Grid";
-import { BulkSmartImport } from "./model/recipe";
+import { bulkSmartImportFromModel } from "./lead/util";
+import { BulkSmartImport } from "./model/model";
+import { BulkSmartImportCard } from "./smartImport/BulkImportCard";
 
 export function Landing() {
   const pocketBase = usePocketBaseContext()!;

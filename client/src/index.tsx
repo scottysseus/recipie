@@ -10,6 +10,7 @@ import { SignIn } from "./SignIn";
 import "./index.css";
 import { BulkSmartImport } from "./smartImport/BulkSmartImport";
 import { BulkSmartImportForm } from "./smartImport/BulkSmartImportForm";
+import { SmartImportRecipe } from "./smartImport/SmartImportRecipe";
 
 const root = document.getElementById("root");
 
@@ -27,6 +28,10 @@ render(
                 component={BulkSmartImportForm}
               />
               <Route path="/bulkSmartImports/:id" component={BulkSmartImport} />
+              <Route
+                path="/bulkSmartImports/:bulkSmartImportId/smartImports/:smartImportId/recipes/:recipeId"
+                component={SmartImportRecipe}
+              />
             </Route>
             <Route path="/signin" component={SignIn} />
           </Router>

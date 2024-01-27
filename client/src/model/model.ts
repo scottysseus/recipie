@@ -1,7 +1,10 @@
 export interface Recipe {
+  id: string;
+  created: string;
   name: string;
+  isDraft: boolean;
   ingredients: Ingredient[];
-  instructions: string[];
+  instructions: string;
   prepTimeMinutes: number;
   totalTimeMinutes: number;
 }

@@ -1,6 +1,6 @@
 import { Show } from "solid-js";
-import { SmartImport } from "../model/recipe";
-import { Card } from "./Card";
+import { Card } from "../grid/Card";
+import { SmartImport } from "../model/model";
 
 export function SmartImportErrorCard({
   smartImport,

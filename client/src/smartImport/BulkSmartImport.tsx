@@ -3,19 +3,19 @@ import Client, { RecordModel } from "pocketbase";
 import { Show, createEffect, createSignal } from "solid-js";
 import { ActionBar } from "../ActionBar";
 import { usePocketBaseContext } from "../PocketBaseContext";
+import { Grid } from "../grid/Grid";
+import { RecipeCard } from "../grid/RecipeCard";
 import {
   bulkSmartImportFromModel,
   smartImportFromModel,
   toLocalizedDateTimeString,
-} from "../client/util";
-import { Grid } from "../grid/Grid";
-import { RecipeCard } from "../grid/RecipeCard";
-import { SmartImportErrorCard } from "../grid/SmartImportErrorCard";
+} from "../lead/util";
 import {
   BulkSmartImport as BulkSmartImportRecord,
   SmartImport,
-} from "../model/recipe";
+} from "../model/model";
 import { LoadingInterstitial } from "./LoadingInterstitial";
+import { SmartImportErrorCard } from "./SmartImportErrorCard";
 
 export function BulkSmartImport() {
   const params = useParams();
@@ -66,11 +66,18 @@ export function BulkSmartImport() {
         sections={{
           Succeeded: smartImports()
             .filter((smartImport) => smartImport.status === "success")
-            .map((smartImport) => smartImport.recipes)
+            .map((smartImport) =>
+              smartImport.recipes.map((recipe) => ({ recipe, smartImport })),
+            )
             .reduce(function (elem1, elem2) {
               return elem1.concat(elem2);
             })
-            .map((recipe) => <RecipeCard recipe={recipe} />),
+            .map((smartImportAndRecipe) => (
+              <RecipeCard
+                recipe={smartImportAndRecipe.recipe}
+                path={`/app/bulkSmartImports/${params.id}/smartImports/${smartImportAndRecipe.smartImport.id}/recipes/${smartImportAndRecipe.recipe.id}`}
+              />
+            )),
           Failed: smartImports()
             .filter((smartImport) => smartImport.status === "error")
             .map((smartImport) => (
