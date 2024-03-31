@@ -14,7 +14,11 @@ function smartImport(
   return pocketBase.send("/smartImport", {
     method: "POST",
     body: JSON.stringify({
-      url: recipeUrl,
+      items: [
+        {
+          url: recipeUrl,
+        },
+      ],
     }),
   });
 }

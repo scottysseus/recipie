@@ -18,7 +18,3 @@ type VertexIngredient struct {
 	Unit        string `json:"unit"`
 	Preparation string `json:"preparation"`
 }
-
-type SmartImportResponse struct {
-	Recipes []string `json:"recipes"`
-}
