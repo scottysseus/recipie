@@ -25,10 +25,9 @@ For each ingredient, please extract:
 - the unit for its quantity (in singular form)
 - any preparation (e.g. "chopped")
 
-Please respond with a JSON object preceeded by the token <json>. Return an empty JSON object if the post contains no cooking recipes.
+Please respond with a JSON object. Return an empty JSON object if the post contains no cooking recipes.
 
 For example:
-<json>
 {
     "recipes": [
         {
@@ -55,8 +54,8 @@ Below is the recipe:
 `
 
 func ExtractRecipe(rawText string) (VertexResponse, error) {
-	codeBlockStartRegex := regexp.MustCompile("^[\\s\\S]*\\n{")
-	codeBlockEndRegex := regexp.MustCompile("}[^}]*$")
+	codeBlockStartRegex := regexp.MustCompile(`^[\s\S]*\n{`)
+	codeBlockEndRegex := regexp.MustCompile(`}[^}]*$`)
 
 	client, err := genai.NewClient(context.Background(), projectId, region)
 	if err != nil {
@@ -65,8 +64,10 @@ func ExtractRecipe(rawText string) (VertexResponse, error) {
 	gemini := client.GenerativeModel("gemini-pro")
 	temperature := float32(0)
 	topP := float32(1)
+	topK := int32(1)
 	maxOutputTokens := int32(2048)
-	gemini.GenerationConfig = genai.GenerationConfig{Temperature: &temperature, TopP: &topP, TopK: &topP, MaxOutputTokens: &maxOutputTokens}
+	gemini.ResponseMIMEType = "application/json"
+	gemini.GenerationConfig = genai.GenerationConfig{Temperature: &temperature, TopP: &topP, TopK: &topK, MaxOutputTokens: &maxOutputTokens}
 
 	prompt := genai.Text(prompt)
 	rawPart := genai.Text(rawText)
@@ -85,7 +86,6 @@ func ExtractRecipe(rawText string) (VertexResponse, error) {
 			}
 
 		}
-
 	}
 
 	allParts = codeBlockStartRegex.ReplaceAllLiteralString(allParts, "{")
