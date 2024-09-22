@@ -18,11 +18,19 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@kobalte/core": "^0.13.6",
+    "caniuse-lite": "",
+    "class-variance-authority": "^0.7.0",
+    "clsx": "^2.1.1",
+    "lucide-solid": "^0.445.0",
     "solid-js": "^1.8.7",
+    "tailwind-merge": "^2.5.2",
+    "tailwindcss-animate": "^1.0.7",
     "temporal-polyfill": "^0.2.0"
   },
   "devDependencies": {
     "@solidjs/router": "^0.10.5",
+    "@types/node": "^22.5.5",
     "autoprefixer": "^10.4.16",
     "husky": "^8.0.0",
     "husky-init": "^8.0.0",

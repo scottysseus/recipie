@@ -5,6 +5,7 @@ import { ActionBar } from "src/components/common/ActionBar";
 import { Loader } from "src/components/common/Loader";
 import { Grid } from "src/components/grid/Grid";
 import { BulkSmartImportCard } from "src/components/smartImport/BulkImportCard";
+import { Button } from "src/components/ui/button";
 import { bulkSmartImportFromModel } from "src/lead/util";
 import { BulkSmartImport } from "src/model/model";
 
@@ -29,9 +30,7 @@ export function Landing() {
   return (
     <>
       <ActionBar>
-        <a class="hover:underline" href="/app/bulkSmartImports/new">
-          + New Recipe
-        </a>
+        <Button>New Recipe</Button>
       </ActionBar>
       <Show
         when={!isLoading()}

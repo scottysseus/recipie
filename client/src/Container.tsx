@@ -1,3 +1,4 @@
+import { ColorModeProvider, ColorModeScript } from "@kobalte/core";
 import { RouteSectionProps } from "@solidjs/router";
 import { createEffect } from "solid-js";
 import { useAuthContext } from "./AuthContext";
@@ -16,9 +17,12 @@ function Container(props: RouteSectionProps) {
 
   return (
     <>
-      <div class="p-6 font-mono">
-        <Nav />
-        {props.children}
+      <div class="p-6">
+        <ColorModeScript />
+        <ColorModeProvider>
+          <Nav />
+          {props.children}
+        </ColorModeProvider>
       </div>
     </>
   );
