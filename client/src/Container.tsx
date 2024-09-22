@@ -9,8 +9,8 @@ function Container(props: RouteSectionProps) {
   const [, setAuthData] = useAuthContext()!;
 
   createEffect(() => {
-    if (pocketBase()?.authStore.isValid) {
-      setAuthData(pocketBase()?.authStore.model);
+    if (pocketBase().authStore.isValid) {
+      setAuthData(pocketBase().authStore.model);
     }
   });
 

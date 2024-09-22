@@ -1,21 +1,54 @@
-import { useNavigate } from "@solidjs/router";
-import { createEffect } from "solid-js";
-import { useAuthContext } from "./AuthContext";
+import { Show, createEffect, createSignal } from "solid-js";
+import { useAuthContext } from "src/AuthContext";
+import { usePocketBaseContext } from "src/PocketBaseContext";
+import { ActionBar } from "src/components/common/ActionBar";
+import { Loader } from "src/components/common/Loader";
+import { Grid } from "src/components/grid/Grid";
+import { BulkSmartImportCard } from "src/components/smartImport/BulkImportCard";
+import { bulkSmartImportFromModel } from "src/lead/util";
+import { BulkSmartImport } from "src/model/model";
 
 export function Landing() {
+  const pocketBase = usePocketBaseContext()!;
   const [authData] = useAuthContext()!;
-  const navigate = useNavigate();
+  const [drafts, setDrafts] = createSignal<BulkSmartImport[]>([]);
+  const [isLoading, setIsLoading] = createSignal(true);
 
   createEffect(() => {
-    if (authData()) {
-      navigate("/app");
-    }
+    pocketBase()
+      .collection("bulkSmartImports")
+      .getList(1, 12, {
+        filter: pocketBase().filter(`creator = "${authData()?.id}"`),
+      })
+      .then((result) => {
+        setDrafts(result.items.map(bulkSmartImportFromModel));
+      })
+      .finally(() => setIsLoading(false));
   });
 
   return (
-    <div class="p-24 text-center">
-      <h1 class="mb-3 text-2xl">Welcome to Recipie</h1>
-      <p>Sign in to get started</p>
-    </div>
+    <>
+      <ActionBar>
+        <a class="hover:underline" href="/app/bulkSmartImports/new">
+          + New Recipe
+        </a>
+      </ActionBar>
+      <Show
+        when={!isLoading()}
+        fallback={
+          <div class="flex justify-center">
+            <Loader />
+          </div>
+        }
+      >
+        <Grid
+          sections={{
+            "Draft Imports": drafts().map((draft) => (
+              <BulkSmartImportCard bulkSmartImport={draft} />
+            )),
+          }}
+        />
+      </Show>
+    </>
   );
 }
