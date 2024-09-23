@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/daos"
@@ -42,7 +43,7 @@ func (service *SmartImportService) SmartImport(params ImportParameters, authReco
 
 	vertexResponse, err := ExtractRecipe(rawRecipeText)
 	if err != nil {
-		err = errors.New("failed to retreive parsed recipe from vertex")
+		err = fmt.Errorf("failed to retreive parsed recipe from vertex: %w", err)
 		UpdateImportFailureStatusOrLog(service.app, params.ImportRecordId, "smartImports", err)
 		completeC <- false
 		return

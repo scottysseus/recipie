@@ -71,7 +71,7 @@ export function BulkSmartImport() {
             )
             .reduce(function (elem1, elem2) {
               return elem1.concat(elem2);
-            })
+            }, [])
             .map((smartImportAndRecipe) => (
               <RecipeCard
                 recipe={smartImportAndRecipe.recipe}

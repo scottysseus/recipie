@@ -1,6 +1,7 @@
 /* @refresh reload */
 import { Route, Router } from "@solidjs/router";
 import { render } from "solid-js/web";
+import { SmartImport } from "src/components/smartImport/SmartImport";
 import { AuthContextProvider } from "./AuthContext";
 import Container from "./Container";
 import { Greeting } from "./Greeting";
@@ -31,6 +32,10 @@ render(
               <Route
                 path="/bulkSmartImports/:bulkSmartImportId/smartImports/:smartImportId/recipes/:recipeId"
                 component={SmartImportRecipe}
+              />
+              <Route
+                path="/bulkSmartImports/:bulkSmartImportId/smartImports/:smartImportId"
+                component={SmartImport}
               />
             </Route>
             <Route path="/signin" component={SignIn} />
