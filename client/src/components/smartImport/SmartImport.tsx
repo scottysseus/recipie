@@ -45,7 +45,8 @@ export function SmartImport() {
           : "Smart import"}
       </p>
       <h1 class="text-xl">{smartImport()?.id}</h1>
-      <p class="text-s mt-3 text-gray-400">{smartImport()?.url}</p>
+      <p class="text-s text-gray-400">{smartImport()?.url}</p>
+      <hr class="mb-4 mt-4 w-full border-black" color="black"></hr>
       <Show when={smartImport()?.error}>
         <p class="mt-3">Smart import failed with error:</p>
         <p class="mt-3 italic">{smartImport()?.error?.error}</p>
