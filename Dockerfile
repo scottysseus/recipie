@@ -1,3 +1,6 @@
+FROM alpine:latest AS certs
+RUN apk --update add ca-certificates
+
 FROM golang:1.21 AS build
 
 WORKDIR /src/server
@@ -18,8 +21,9 @@ RUN CGO_ENABLED=0 GOOS=linux go build -C /src/server -o /dist/recipie
 
 FROM scratch
 
-COPY --from=0 /dist/recipie /dist/recipie
+COPY --from=certs /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+COPY --from=build /dist/recipie /dist/recipie
 
 EXPOSE 8090
 
-CMD ["/dist/recipie", "serve", "--http=0.0.0.0:8090"]
+CMD ["/dist/recipie", "serve", "--http=127.0.0.1:8090"]
