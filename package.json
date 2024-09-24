@@ -11,7 +11,7 @@
     "server": "bun run build:server && bun run docker:stop && bun run docker:start",
     "build:server-local": "go build -C ./server -o ../dist/recipie",
     "server-local": "./dist/recipie serve",
-    "dev:client": "vite",
+    "client": "VITE_PB_URL=\"http://localhost:8090\" vite",
     "build:client": "tsc && vite build",
     "preview": "vite preview",
     "gittree": "git log --oneline --graph --decorate --all",

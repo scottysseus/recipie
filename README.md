@@ -23,14 +23,13 @@ bun install
 Start the backend server:
 
 ```bash
-bun run build:server
 bun run server
 ```
 
 In a separate terminal, start the client dev server:
 
 ```bash
-bun run dev:client
+bun run client
 ```
 
 Which should be available at http://localhost:5173.
