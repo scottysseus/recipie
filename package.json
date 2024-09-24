@@ -16,7 +16,7 @@
     "preview": "vite preview",
     "gittree": "git log --oneline --graph --decorate --all",
     "docker:build": "docker image rm -f recipie; docker build -t recipie . --progress=plain",
-    "docker:start": "docker container rm recipie; docker run --network=\"host\" --mount type=bind,source=\"$(pwd)\"/dist/pb_data,target=/dist/pb_data -p 8090:8090 --name recipie recipie",
+    "docker:start": "docker container rm recipie; docker run --network=\"host\" --mount type=bind,source=\"$(pwd)\"/dist/pb_data,target=/dist/pb_data --mount type=bind,source=$HOME/.config/gcloud/application_default_credentials.json,target=/gcp/creds.json --env GOOGLE_APPLICATION_CREDENTIALS=/gcp/creds.json -p 8090:8090 --name recipie recipie",
     "docker:stop": "docker stop recipie"
   },
   "keywords": [],
