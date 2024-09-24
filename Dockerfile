@@ -26,4 +26,4 @@ COPY --from=build /dist/recipie /dist/recipie
 
 EXPOSE 8090
 
-CMD ["/dist/recipie", "serve", "--http=127.0.0.1:8090"]
+CMD ["/dist/recipie", "serve", "--http=0.0.0.0:8090"]
