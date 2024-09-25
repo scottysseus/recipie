@@ -30,7 +30,7 @@ export function Landing() {
     <>
       <ActionBar>
         <a class="hover:underline" href="/app/bulkSmartImports/new">
-          + New Recipe
+          + Import Recipes
         </a>
       </ActionBar>
       <Show
