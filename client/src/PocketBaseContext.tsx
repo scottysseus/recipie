@@ -7,7 +7,10 @@ import {
   useContext,
 } from "solid-js";
 
-const pb = new PocketBase(import.meta.env.VITE_PB_URL);
+// const pb = new PocketBase(import.meta.env.VITE_PB_URL);
+const pb = new PocketBase(
+  "https://recipie-server-767578206397.us-central1.run.app",
+);
 
 const PocketBaseContext = createContext<Accessor<PocketBase>>();
 
