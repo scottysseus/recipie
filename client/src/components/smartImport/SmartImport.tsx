@@ -2,9 +2,9 @@ import { useParams } from "@solidjs/router";
 import { Show, createEffect, createSignal } from "solid-js";
 import { usePocketBaseContext } from "src/PocketBaseContext";
 import { ActionBar } from "src/components/common/ActionBar";
+import { LoadingInterstitial } from "src/components/common/LoadingInterstitial";
 import { smartImportFromModel } from "src/lead/util";
 import { SmartImport as SmartImportModel } from "src/model/model";
-import { LoadingInterstitial } from "./LoadingInterstitial";
 
 export function SmartImport() {
   const params = useParams();

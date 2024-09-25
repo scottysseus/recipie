@@ -3,9 +3,9 @@ import Client, { RecordModel } from "pocketbase";
 import { Show, createEffect, createSignal } from "solid-js";
 import { usePocketBaseContext } from "src/PocketBaseContext";
 import { ActionBar } from "src/components/common/ActionBar";
+import { LoadingInterstitial } from "src/components/common/LoadingInterstitial";
 import { Grid } from "src/components/grid/Grid";
 import { RecipeCard } from "src/components/grid/RecipeCard";
-import { LoadingInterstitial } from "src/components/smartImport/LoadingInterstitial";
 import { SmartImportErrorCard } from "src/components/smartImport/SmartImportErrorCard";
 import {
   bulkSmartImportFromModel,

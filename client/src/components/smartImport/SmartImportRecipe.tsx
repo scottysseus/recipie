@@ -2,10 +2,10 @@ import { useParams } from "@solidjs/router";
 import { Show, createEffect, createSignal } from "solid-js";
 import { usePocketBaseContext } from "src/PocketBaseContext";
 import { ActionBar } from "src/components/common/ActionBar";
+import { LoadingInterstitial } from "src/components/common/LoadingInterstitial";
 import { Recipe } from "src/components/common/Recipe";
 import { ingredientFromModel, recipeFromModel } from "src/lead/util";
 import { Recipe as RecipeRecord } from "src/model/model";
-import { LoadingInterstitial } from "./LoadingInterstitial";
 
 export function SmartImportRecipe() {
   const params = useParams();
