@@ -11,9 +11,9 @@ export function Nav() {
       >
         signed in as: {authData()?.email || "unknown"}
       </p>
-      <nav class="mb-6 flex flex-wrap items-baseline justify-between">
+      <nav class="mb-6 flex flex-wrap items-center justify-between">
         <div class="mr-6 flex flex-shrink-0 items-center">
-          <a class="text-xl font-semibold tracking-tight" href="/">
+          <a class="text-3xl font-semibold tracking-tight" href="/">
             Recipie
           </a>
         </div>
