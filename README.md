@@ -38,7 +38,7 @@ Which should be available at http://localhost:5173.
 
 To properly use the application, a few integrations need to be configured that cannot be fully automated.
 
-First, OIDC/OAuth2 integration with Google can be configured through the admin UI. Follow [these instructions](https://pocketbase.io/docs/authentication/#oauth2-integration) in the admin UI, which can be accessed at http://localhost:8090/\_/. The client ID and secret can be viewed [in the GCP console](https://console.cloud.google.com/apis/credentials/oauthclient/767578206397-g4ede95c4o8s10mqc8k74k82jffr4vlo.apps.googleusercontent.com?project=recipie-408600)
+First, OIDC/OAuth2 integration with Google and Facebook can be configured through the admin UI. Follow [these instructions](https://pocketbase.io/docs/authentication/#oauth2-integration) in the admin UI, which can be accessed at http://localhost:8090/\_/. The client ID and secret can be viewed [here](https://console.cloud.google.com/apis/credentials/oauthclient/767578206397-g4ede95c4o8s10mqc8k74k82jffr4vlo.apps.googleusercontent.com?project=recipie-408600) for Google and [here](https://developers.facebook.com/apps/384003040967844/settings/basic/) for Facebook.
 
 Next, install the `gcloud` CLI following [these instructions](https://cloud.google.com/sdk/docs/install). After installing, run the below command to authenticate your system:
 
