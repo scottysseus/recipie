@@ -22,7 +22,7 @@ Recipie is built on [PocketBase](https://pocketbase.io/) with a [solidjs](https:
     bun install
     ```
 
-1. Start the backend server:
+1. Start the backend server (create a container first: _docker run -d --name recipie recipie_):
 
     ```bash
     bun run server
