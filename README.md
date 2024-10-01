@@ -16,7 +16,7 @@ Recipie is built on [PocketBase](https://pocketbase.io/) with a [solidjs](https:
     npm install -g bun
     ```
 
-1. and install all dependencies:
+1. and install all dependencies (from project root folder):
 
     ```bash
     bun install
