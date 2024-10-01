@@ -6,33 +6,35 @@ Recipie is built on [PocketBase](https://pocketbase.io/) with a [solidjs](https:
 
 ## Development Setup
 
-Install the latest [golang](https://go.dev/doc/install) version.
+1. Install the latest [golang](https://go.dev/doc/install) version.
 
-Install [bun](https://bun.sh/):
+1. Install [Docker](https://docs.docker.com/engine/install/).
 
-```bash
-npm install -g bun
-```
+1. Install [bun](https://bun.sh/):
 
-and install all dependencies:
+    ```bash
+    npm install -g bun
+    ```
 
-```bash
-bun install
-```
+1. and install all dependencies:
 
-Start the backend server:
+    ```bash
+    bun install
+    ```
 
-```bash
-bun run server
-```
+1. Start the backend server:
 
-In a separate terminal, start the client dev server:
+    ```bash
+    bun run server
+    ```
 
-```bash
-bun run client
-```
+1. In a separate terminal, start the client dev server:
 
-Which should be available at http://localhost:5173.
+    ```bash
+    bun run client
+    ```
+
+    Which should be available at http://localhost:5173.
 
 ### App Setup
 
