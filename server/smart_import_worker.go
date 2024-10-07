@@ -10,7 +10,7 @@ import (
 	"github.com/pocketbase/pocketbase/models"
 )
 
-type SmartImportService struct {
+type SmartImportWorker struct {
 	app *pocketbase.PocketBase
 }
 
@@ -20,21 +20,19 @@ type ImportParameters struct {
 	ImportRecordId string
 }
 
-func NewSmartImportService(app *pocketbase.PocketBase) *SmartImportService {
-	return &SmartImportService{app: app}
+func NewSmartImportWorker(app *pocketbase.PocketBase) *SmartImportWorker {
+	return &SmartImportWorker{app: app}
 }
 
 // SmartImport attempts to import recipes from the given parameters, either a URL or raw text.
-// It sends a completion signal (true for success, false for error) to the completC channel.
-func (service *SmartImportService) SmartImport(params ImportParameters, authRecord *models.Record, completeC chan<- bool) {
+func (worker *SmartImportWorker) SmartImport(params ImportParameters, authRecord *models.Record) {
 
 	var rawRecipeText string
 	var err error
 	if params.Url != "" {
 		rawRecipeText, err = ScrapeRecipe(params.Url)
 		if err != nil {
-			UpdateImportFailureStatusOrLog(service.app, params.ImportRecordId, "smartImports", err)
-			completeC <- false
+			UpdateImportFailureStatusOrLog(worker.app, params.ImportRecordId, "smartImports", err)
 			return
 		}
 	} else {
@@ -44,19 +42,14 @@ func (service *SmartImportService) SmartImport(params ImportParameters, authReco
 	vertexResponse, err := ExtractRecipe(rawRecipeText)
 	if err != nil {
 		err = fmt.Errorf("failed to retreive parsed recipe from vertex: %w", err)
-		UpdateImportFailureStatusOrLog(service.app, params.ImportRecordId, "smartImports", err)
-		completeC <- false
+		UpdateImportFailureStatusOrLog(worker.app, params.ImportRecordId, "smartImports", err)
 		return
 	}
-	err = insertRecipe(service.app, vertexResponse, authRecord, params.ImportRecordId)
+	err = insertRecipe(worker.app, vertexResponse, authRecord, params.ImportRecordId)
 	if err != nil {
-		UpdateImportFailureStatusOrLog(service.app, params.ImportRecordId, "smartImports", err)
-		completeC <- false
+		UpdateImportFailureStatusOrLog(worker.app, params.ImportRecordId, "smartImports", err)
 		return
 	}
-
-	// send a success signal to the channel
-	completeC <- true
 }
 
 func insertRecipe(app *pocketbase.PocketBase,

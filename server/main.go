@@ -20,7 +20,7 @@ import (
 func main() {
 	app := pocketbase.New()
 
-	smartImportService := NewSmartImportService(app)
+	smartImportService := NewSmartImportWorker(app)
 	smartImportHandler := NewSmartImportHandler(app, smartImportService)
 
 	app.OnBeforeServe().Add(func(e *core.ServeEvent) error {

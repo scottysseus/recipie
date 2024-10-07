@@ -32,41 +32,6 @@ func initSchema(dao *daos.Dao) error {
 		return err
 	}
 
-	ingredientsCollection := &models.Collection{
-		Name: "ingredients",
-		Type: models.CollectionTypeBase,
-		Schema: schema.NewSchema(&schema.SchemaField{
-			Name:     "name",
-			Required: true,
-			Type:     schema.FieldTypeText,
-		}, &schema.SchemaField{
-			Name: "creator",
-			Type: schema.FieldTypeRelation,
-			Options: &schema.RelationOptions{
-				MaxSelect:    types.Pointer(1),
-				CollectionId: userCollection.Id,
-			},
-		}, &schema.SchemaField{
-			Name: "quantity",
-			Type: schema.FieldTypeNumber,
-		}, &schema.SchemaField{
-			Name: "unit",
-			Type: schema.FieldTypeText,
-		}, &schema.SchemaField{
-			Name: "preparation",
-			Type: schema.FieldTypeText,
-		}),
-		ListRule:   types.Pointer("@request.auth.id != ''"),
-		ViewRule:   types.Pointer("@request.auth.id != ''"),
-		CreateRule: types.Pointer("@request.auth.id != ''"),
-		UpdateRule: types.Pointer("@request.auth.id != ''"),
-		DeleteRule: types.Pointer("@request.auth.id != ''"),
-	}
-
-	if err = createIfNotExist(dao, ingredientsCollection); err != nil {
-		return err
-	}
-
 	recipesCollection := &models.Collection{
 		Name: "recipes",
 		Type: models.CollectionTypeBase,
@@ -92,10 +57,7 @@ func initSchema(dao *daos.Dao) error {
 			Type: schema.FieldTypeText,
 		}, &schema.SchemaField{
 			Name: "ingredients",
-			Type: schema.FieldTypeRelation,
-			Options: &schema.RelationOptions{
-				CollectionId: ingredientsCollection.Id,
-			},
+			Type: schema.FieldTypeJson,
 		}, &schema.SchemaField{
 			Name: "instructions",
 			Type: schema.FieldTypeJson,
