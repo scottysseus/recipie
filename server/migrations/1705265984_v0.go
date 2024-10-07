@@ -49,6 +49,9 @@ func initSchema(dao *daos.Dao) error {
 				MaxSelect:    types.Pointer(1),
 				CollectionId: userCollection.Id,
 			},
+		},&schema.SchemaField{
+			Name: "url",
+			Type: schema.FieldTypeText,
 		}, &schema.SchemaField{
 			Name: "totalTimeMinutes",
 			Type: schema.FieldTypeText,
