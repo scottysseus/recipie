@@ -15,7 +15,7 @@ export function BulkSmartImportCard({
     >
       <p class="text-xs">{bulkSmartImport.imports.length || "???"} recipes</p>
       <Show when={bulkSmartImport.created}>
-        <p class="mt-2 text-xs text-gray-400">
+        <p class="mt-2 text-xs text-gray-600">
           {toLocalizedDateTimeString(bulkSmartImport.created)}
         </p>
       </Show>

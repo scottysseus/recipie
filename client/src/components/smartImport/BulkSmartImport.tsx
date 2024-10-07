@@ -14,6 +14,7 @@ import {
 } from "src/lead/util";
 import {
   BulkSmartImport as BulkSmartImportRecord,
+  Recipe,
   SmartImport,
 } from "src/model/model";
 
@@ -55,29 +56,25 @@ export function BulkSmartImport() {
           Back
         </a>
       </ActionBar>
-      <p class="mb-2 text-gray-400">Bulk Smart Import</p>
-      <h1 class="mb-2 text-2xl">{params.id}</h1>
+      <p class="mb-2 text-gray-600">Bulk Smart Import</p>
+      <h1 class="text-2xl">{params.id}</h1>
       <Show when={bulkImport()?.created}>
-        <h2 class="mb-8 text-gray-400">
+        <h2 class="mb-8 text-gray-600">
           from {toLocalizedDateTimeString(bulkImport()?.created!)}
         </h2>
       </Show>
       <Grid
         sections={{
-          Succeeded: smartImports()
-            .filter((smartImport) => smartImport.status === "success")
-            .map((smartImport) =>
-              smartImport.recipes.map((recipe) => ({ recipe, smartImport })),
-            )
-            .reduce(function (elem1, elem2) {
-              return elem1.concat(elem2);
-            }, [])
-            .map((smartImportAndRecipe) => (
-              <RecipeCard
-                recipe={smartImportAndRecipe.recipe}
-                path={`/app/bulkSmartImports/${params.id}/smartImports/${smartImportAndRecipe.smartImport.id}/recipes/${smartImportAndRecipe.recipe.id}`}
-              />
-            )),
+          "Succeeded - saved": selectSaved(smartImports()).map(
+            (smartImportAndRecipe) =>
+              getCardForRecipe(params.id, smartImportAndRecipe),
+          ),
+
+          "Succeeded - drafts": selectDrafts(smartImports()).map(
+            (smartImportAndRecipe) =>
+              getCardForRecipe(params.id, smartImportAndRecipe),
+          ),
+
           Failed: smartImports()
             .filter((smartImport) => smartImport.status === "error")
             .map((smartImport) => (
@@ -189,6 +186,44 @@ function fetchSmartImportResults(
     .catch((err) => {
       onError(err);
     });
+}
+
+function selectSuccesses(smartImports: SmartImport[]) {
+  return smartImports
+    .filter((smartImport) => smartImport.status === "success")
+    .map((smartImport) =>
+      smartImport.recipes.map((recipe) => ({ recipe, smartImport })),
+    )
+    .reduce(function (elem1, elem2) {
+      return elem1.concat(elem2);
+    }, []);
+}
+
+function selectSaved(smartImports: SmartImport[]) {
+  return selectSuccesses(smartImports).filter(
+    (smartImportAndRecipe) => !smartImportAndRecipe.recipe.isDraft,
+  );
+}
+
+function selectDrafts(smartImports: SmartImport[]) {
+  return selectSuccesses(smartImports).filter(
+    (smartImportAndRecipe) => smartImportAndRecipe.recipe.isDraft,
+  );
+}
+
+function getCardForRecipe(
+  bulkImportId: string,
+  smartImportAndRecipe: {
+    recipe: Recipe;
+    smartImport: SmartImport;
+  },
+) {
+  return (
+    <RecipeCard
+      recipe={smartImportAndRecipe.recipe}
+      path={`/app/bulkSmartImports/${bulkImportId}/smartImports/${smartImportAndRecipe.smartImport.id}/recipes/${smartImportAndRecipe.recipe.id}`}
+    />
+  );
 }
 
 function recipeModelListToMap(recipes: RecordModel[]) {
