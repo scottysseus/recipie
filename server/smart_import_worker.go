@@ -5,90 +5,74 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/pocketbase/pocketbase"
+	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/daos"
 	"github.com/pocketbase/pocketbase/models"
 )
 
-type SmartImportWorker struct {
-	app *pocketbase.PocketBase
-}
+func SmartImport(event *core.ModelEvent) error {
+	if !event.Model.IsNew() {
+		return nil
+	}
 
-type ImportParameters struct {
-	Url            string
-	RawText        string
-	ImportRecordId string
-}
+	record, err := event.Dao.FindRecordById("smartImports", event.Model.GetId())
+	if err != nil {
+		return err
+	}
 
-func NewSmartImportWorker(app *pocketbase.PocketBase) *SmartImportWorker {
-	return &SmartImportWorker{app: app}
-}
+	url := record.Get("url").(string)
+	creator := record.Get("creator").(string)
+	if url == "" {
+		return fmt.Errorf("no url provided for recipe %s", record.Id)
+	}
 
-// SmartImport attempts to import recipes from the given parameters, either a URL or raw text.
-func (worker *SmartImportWorker) SmartImport(params ImportParameters, authRecord *models.Record) {
-
-	var rawRecipeText string
-	var err error
-	if params.Url != "" {
-		rawRecipeText, err = ScrapeRecipe(params.Url)
-		if err != nil {
-			UpdateImportFailureStatusOrLog(worker.app, params.ImportRecordId, "smartImports", err)
-			return
-		}
-	} else {
-		rawRecipeText = params.RawText
+	rawRecipeText, err := ScrapeRecipe(url)
+	if err != nil {
+		// TODO
+		// UpdateImportFailureStatusOrLog(worker.app, params.ImportRecordId, "smartImports", err)
+		return err
 	}
 
 	vertexResponse, err := ExtractRecipe(rawRecipeText)
 	if err != nil {
 		err = fmt.Errorf("failed to retreive parsed recipe from vertex: %w", err)
-		UpdateImportFailureStatusOrLog(worker.app, params.ImportRecordId, "smartImports", err)
-		return
+		// TODO
+		// UpdateImportFailureStatusOrLog(worker.app, params.ImportRecordId, "smartImports", err)
+		return err
 	}
-	err = insertRecipe(worker.app, vertexResponse, authRecord, params.ImportRecordId)
+	err = insertRecipe(event.Dao, vertexResponse, creator, record.Id)
 	if err != nil {
-		UpdateImportFailureStatusOrLog(worker.app, params.ImportRecordId, "smartImports", err)
-		return
+		// TODO
+		// UpdateImportFailureStatusOrLog(worker.app, params.ImportRecordId, "smartImports", err)
+		return err
 	}
+
+	return nil
 }
 
-func insertRecipe(app *pocketbase.PocketBase,
-	vertexResponse VertexResponse, authRecord *models.Record, importRecordId string) error {
-	ingredientsCollection, err := app.Dao().FindCollectionByNameOrId("ingredients")
+func insertRecipe(dao *daos.Dao,
+	vertexResponse VertexResponse, creator string, importRecordId string) error {
+
+	recipesCollection, err := dao.FindCollectionByNameOrId("recipes")
 	if err != nil {
 		return err
 	}
 
-	recipesCollection, err := app.Dao().FindCollectionByNameOrId("recipes")
-	if err != nil {
-		return err
-	}
-
-	if app.Dao() == nil {
+	if dao == nil {
 		return errors.New("unable to access database")
 	}
 
-	err = app.Dao().RunInTransaction(func(txDao *daos.Dao) error {
+	err = dao.RunInTransaction(func(txDao *daos.Dao) error {
 		recipes := []string{}
 		for _, recipe := range vertexResponse.Recipes {
-			ingredients := []string{}
-			for _, ingredient := range recipe.Ingredients {
-				newIngredientRecord := models.NewRecord(ingredientsCollection)
-
-				newIngredientRecord.Set("name", ingredient.Name)
-				newIngredientRecord.Set("quantity", ingredient.Quantity)
-				newIngredientRecord.Set("unit", ingredient.Unit)
-				newIngredientRecord.Set("preparation", ingredient.Preparation)
-				newIngredientRecord.Set("creator", authRecord.Id)
-
-				err := txDao.SaveRecord(newIngredientRecord)
-				if err != nil {
-					return err
-				}
-				ingredients = append(ingredients, newIngredientRecord.Id)
-			}
 			newRecipeRecord := models.NewRecord(recipesCollection)
-			instructions, err := json.Marshal(&VertexRecipe{Instructions: recipe.Instructions})
+
+			ingredients, err := json.Marshal(&IngredientsList{Ingredients: recipe.Ingredients})
+			if err != nil {
+				return err
+			}
+
+			instructions, err := json.Marshal(&InstructionsList{Instructions: recipe.Instructions})
 			if err != nil {
 				return err
 			}
@@ -97,7 +81,7 @@ func insertRecipe(app *pocketbase.PocketBase,
 			newRecipeRecord.Set("isDraft", true)
 			newRecipeRecord.Set("totalTimeMinutes", recipe.TotalTimeMinutes)
 			newRecipeRecord.Set("prepTimeMinutes", recipe.PrepTimeMinutes)
-			newRecipeRecord.Set("creator", authRecord.Id)
+			newRecipeRecord.Set("creator", creator)
 			newRecipeRecord.Set("ingredients", ingredients)
 			newRecipeRecord.Set("instructions", instructions)
 
@@ -108,7 +92,7 @@ func insertRecipe(app *pocketbase.PocketBase,
 			recipes = append(recipes, newRecipeRecord.Id)
 		}
 
-		smartImportRecord, err := app.Dao().FindRecordById("smartImports", importRecordId)
+		smartImportRecord, err := dao.FindRecordById("smartImports", importRecordId)
 		if err != nil {
 			return err
 		}

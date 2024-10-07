@@ -23,11 +23,19 @@ func (handler *SmartImportHandler) SmartImport(reqCtx echo.Context, authRecord *
 		return reqCtx.JSON(400, &ErrorResponse{Code: ErrorBadJson, Error: err.Error()})
 	}
 
-	bulkId, err := handler.initializer.Initialize(request.Items, authRecord)
+	idToUrlMap, err := handler.initializer.Initialize(request.Items, authRecord)
 	if err != nil {
 		return reqCtx.JSON(500, &ErrorResponse{Code: ErrorInternalDatabase, Error: err.Error()})
 	}
 
-	return reqCtx.JSON(200, &SmartImportResponse{Id: bulkId})
+	imports := make([]UrlImport, len(request.Items))
+	for key, value := range idToUrlMap {
+		imports = append(imports, UrlImport{
+			Id: key,
+			Url: value,
+		})
+	}
+
+	return reqCtx.JSON(200, &SmartImportResponse{UrlImports: imports})
 
 }

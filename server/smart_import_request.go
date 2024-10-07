@@ -6,11 +6,15 @@ type SmartImportRequest struct {
 
 type SmartImportItem struct {
 	Url     string `json:"url"`
-	RawText string `json:"rawText"`
 }
 
 type SmartImportResponse struct {
-	Id string `json:"id"`
+	UrlImports []UrlImport `json:"urlImports"`
+}
+
+type UrlImport struct {
+	Url string `json:"url"`
+	Id  string `json:"id"`
 }
 
 type ErrorResponse struct {

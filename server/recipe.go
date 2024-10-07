@@ -18,3 +18,11 @@ type VertexIngredient struct {
 	Unit        string `json:"unit"`
 	Preparation string `json:"preparation"`
 }
+
+type IngredientsList struct {
+	Ingredients []VertexIngredient `json:"ingredients"`
+}
+
+type InstructionsList struct {
+	Instructions []string `json:"instructions"`
+}

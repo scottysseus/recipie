@@ -20,7 +20,6 @@ export interface SmartImport {
   id: string;
   status: "success" | "processing" | "error";
   url: string;
-  rawText: string;
   error: any;
   recipes: Recipe[];
 }

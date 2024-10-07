@@ -20,8 +20,8 @@ import (
 func main() {
 	app := pocketbase.New()
 
-	smartImportService := NewSmartImportWorker(app)
-	smartImportHandler := NewSmartImportHandler(app, smartImportService)
+	initializer := NewSmartImportInitializer(app)
+	smartImportHandler := NewSmartImportHandler(app, initializer)
 
 	app.OnBeforeServe().Add(func(e *core.ServeEvent) error {
 		e.Router.POST("/smartImport", func(c echo.Context) error {
@@ -36,6 +36,8 @@ func main() {
 		}, apis.RequireRecordAuth())
 		return nil
 	})
+
+	app.OnModelAfterUpdate("smartImports").Add(SmartImport)
 
 	migratecmd.MustRegister(app, app.RootCmd, migratecmd.Config{})
 

@@ -92,9 +92,6 @@ func initSchema(dao *daos.Dao) error {
 			Name: "url",
 			Type: schema.FieldTypeText,
 		}, &schema.SchemaField{
-			Name: "rawText",
-			Type: schema.FieldTypeText,
-		}, &schema.SchemaField{
 			Name: "error",
 			Type: schema.FieldTypeJson,
 		}, &schema.SchemaField{
@@ -119,43 +116,7 @@ func initSchema(dao *daos.Dao) error {
 			CollectionId: smartImportsCollection.Id,
 		},
 	})
-	if err = createIfNotExist(dao, smartImportsCollection); err != nil {
-		return err
-	}
-
-	bulkSmartImportsCollection := &models.Collection{
-		Name: "bulkSmartImports", Type: models.CollectionTypeBase,
-		Schema: schema.NewSchema(&schema.SchemaField{
-			Name: "creator",
-			Type: schema.FieldTypeRelation,
-			Options: &schema.RelationOptions{
-				MaxSelect:    types.Pointer(1),
-				CollectionId: userCollection.Id,
-			},
-		}, &schema.SchemaField{
-			Name: "imports",
-			Type: schema.FieldTypeRelation,
-			Options: &schema.RelationOptions{
-				CollectionId: smartImportsCollection.Id,
-			},
-		}, &schema.SchemaField{
-			Name: "status",
-			Type: schema.FieldTypeSelect,
-			Options: &schema.SelectOptions{
-				Values: []string{"success", "error", "processing"},
-			},
-		}, &schema.SchemaField{
-			Name: "error",
-			Type: schema.FieldTypeJson,
-		}),
-		ListRule:   types.Pointer("@request.auth.id != ''"),
-		ViewRule:   types.Pointer("@request.auth.id != ''"),
-		CreateRule: types.Pointer("@request.auth.id != ''"),
-		UpdateRule: types.Pointer("@request.auth.id != ''"),
-		DeleteRule: types.Pointer("@request.auth.id != ''"),
-	}
-
-	return createIfNotExist(dao, bulkSmartImportsCollection)
+	return createIfNotExist(dao, smartImportsCollection)
 }
 
 func createIfNotExist(dao *daos.Dao, collection *models.Collection) error {
