@@ -4,13 +4,22 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
 
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/daos"
 	"github.com/pocketbase/pocketbase/models"
 )
 
-func SmartImport(event *core.ModelEvent) error {
+type SmartImportWorker struct {
+	logger *slog.Logger
+}
+
+func NewSmartImportWorker(logger *slog.Logger) *SmartImportWorker {
+	return &SmartImportWorker{logger: logger}
+}
+
+func (worker *SmartImportWorker) SmartImport(event *core.ModelEvent) error {
 	if !event.Model.IsNew() {
 		return nil
 	}
@@ -28,22 +37,19 @@ func SmartImport(event *core.ModelEvent) error {
 
 	rawRecipeText, err := ScrapeRecipe(url)
 	if err != nil {
-		// TODO
-		// UpdateImportFailureStatusOrLog(worker.app, params.ImportRecordId, "smartImports", err)
+		UpdateImportFailureStatusOrLog(event.Dao, worker.logger, record.Id, url, err)
 		return err
 	}
 
 	vertexResponse, err := ExtractRecipe(rawRecipeText)
 	if err != nil {
 		err = fmt.Errorf("failed to retreive parsed recipe from vertex: %w", err)
-		// TODO
-		// UpdateImportFailureStatusOrLog(worker.app, params.ImportRecordId, "smartImports", err)
+		UpdateImportFailureStatusOrLog(event.Dao, worker.logger, record.Id, url, err)
 		return err
 	}
-	err = insertRecipe(event.Dao, vertexResponse, creator, record.Id)
+	err = insertRecipe(event.Dao, vertexResponse, creator, record.Id, url)
 	if err != nil {
-		// TODO
-		// UpdateImportFailureStatusOrLog(worker.app, params.ImportRecordId, "smartImports", err)
+		UpdateImportFailureStatusOrLog(event.Dao, worker.logger, record.Id, url, err)
 		return err
 	}
 
@@ -51,7 +57,7 @@ func SmartImport(event *core.ModelEvent) error {
 }
 
 func insertRecipe(dao *daos.Dao,
-	vertexResponse VertexResponse, creator string, importRecordId string) error {
+	vertexResponse VertexResponse, creator string, importRecordId string, url string) error {
 
 	recipesCollection, err := dao.FindCollectionByNameOrId("recipes")
 	if err != nil {
@@ -78,6 +84,7 @@ func insertRecipe(dao *daos.Dao,
 			}
 
 			newRecipeRecord.Set("name", recipe.Name)
+			newRecipeRecord.Set("url", url)
 			newRecipeRecord.Set("isDraft", true)
 			newRecipeRecord.Set("totalTimeMinutes", recipe.TotalTimeMinutes)
 			newRecipeRecord.Set("prepTimeMinutes", recipe.PrepTimeMinutes)

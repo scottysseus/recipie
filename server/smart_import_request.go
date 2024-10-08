@@ -5,7 +5,7 @@ type SmartImportRequest struct {
 }
 
 type SmartImportItem struct {
-	Url     string `json:"url"`
+	Url string `json:"url"`
 }
 
 type SmartImportResponse struct {

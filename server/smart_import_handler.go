@@ -31,7 +31,7 @@ func (handler *SmartImportHandler) SmartImport(reqCtx echo.Context, authRecord *
 	imports := make([]UrlImport, len(request.Items))
 	for key, value := range idToUrlMap {
 		imports = append(imports, UrlImport{
-			Id: key,
+			Id:  key,
 			Url: value,
 		})
 	}
