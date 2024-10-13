@@ -7,7 +7,11 @@ export function RecipeList({ recipes }: { recipes: Recipe[] }) {
     <Show when={recipes.length > 0} fallback={Placeholder()}>
       <div class="flex flex-col">
         <For each={recipes}>
-          {(recipe) => <RecipeCard recipe={recipe} path="" />}
+          {(recipe) => (
+            <div class="mb-3">
+              <RecipeCard recipe={recipe} path={`/app/recipes/${recipe.id}`} />
+            </div>
+          )}
         </For>
       </div>
     </Show>

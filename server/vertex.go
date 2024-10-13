@@ -79,6 +79,9 @@ func ExtractRecipe(rawText string) (VertexResponse, error) {
 
 	var allParts string
 	for i := 0; i < len(resp.Candidates); i++ {
+		if resp.Candidates[i].Content == nil {
+			continue
+		}
 		for j := 0; j < len(resp.Candidates[i].Content.Parts); j++ {
 			switch text := resp.Candidates[i].Content.Parts[j].(type) {
 			case genai.Text:

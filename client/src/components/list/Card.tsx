@@ -11,7 +11,7 @@ export function Card(props: CardProps) {
   const navigate = useNavigate();
   return (
     <button
-      class="min-w-72 max-w-xs border border-black p-2 text-start"
+      class="w-full border border-black p-2 text-start"
       onClick={() => props.path && navigate(props.path)}
     >
       <Show when={props.subtitle}>
