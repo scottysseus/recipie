@@ -18,8 +18,9 @@ export interface Ingredient {
 
 export interface SmartImport {
   id: string;
+  created: string;
   status: "success" | "processing" | "error";
   url: string;
   error: any;
-  recipes: Recipe[];
+  recipes: string[];
 }

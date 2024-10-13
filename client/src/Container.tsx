@@ -1,5 +1,6 @@
 import { RouteSectionProps } from "@solidjs/router";
 import { createEffect } from "solid-js";
+import { Nav } from "src/Nav";
 import { useAuthContext } from "./AuthContext";
 import { Header } from "./Header";
 import { usePocketBaseContext } from "./PocketBaseContext";
@@ -18,6 +19,7 @@ function Container(props: RouteSectionProps) {
     <>
       <div class="p-6 font-mono">
         <Header />
+        <Nav />
         {props.children}
       </div>
     </>

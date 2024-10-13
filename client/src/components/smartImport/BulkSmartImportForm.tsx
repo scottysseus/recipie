@@ -29,12 +29,12 @@ export function BulkSmartImportForm() {
           class="hover:underline"
           onClick={async () => {
             smartImport(pocketBase(), recipeUrls())
-              .then(() => {
-                navigate(`/app`);
-              })
               // TODO handle errors here
               .catch((error) => {
                 console.log(error);
+              })
+              .finally(() => {
+                navigate(`/app/smartImports`);
               });
           }}
         >

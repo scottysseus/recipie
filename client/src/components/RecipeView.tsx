@@ -31,7 +31,7 @@ export function RecipeView() {
 
   return (
     <>
-      <NamedHr name={`Recipe ${recipe()?.id ?? "???"}`} />
+      <NamedHr name={`Recipe ${params.id ?? "???"}`} />
       <Switch fallback={<RecipeError />}>
         <Match when={isLoading()}>
           <Loader />

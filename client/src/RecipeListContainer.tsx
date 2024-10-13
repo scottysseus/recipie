@@ -3,12 +3,11 @@ import { useAuthContext } from "src/AuthContext";
 import { usePocketBaseContext } from "src/PocketBaseContext";
 import { ActionBar } from "src/components/common/ActionBar";
 import { Loader } from "src/components/common/Loader";
-import { NamedHr } from "src/components/common/NamedHr";
-import { RecipeList } from "src/components/list/RecipeList";
+import { RecipeListView } from "src/components/list/RecipeListView";
 import { recipeFromModel } from "src/lead/util";
 import { Recipe } from "src/model/model";
 
-export function Landing() {
+export function RecipeListContainer() {
   const pocketBase = usePocketBaseContext()!;
   const [authData] = useAuthContext()!;
   const [recipes, setRecipes] = createSignal<Recipe[]>([]);
@@ -17,11 +16,11 @@ export function Landing() {
   createEffect(() => {
     pocketBase()
       .collection("recipes")
-      .getList(1, 12, {
+      .getFullList({
         filter: pocketBase().filter(`creator = "${authData()?.id}"`),
       })
       .then((result) => {
-        setRecipes(result.items.map(recipeFromModel));
+        setRecipes(result.map(recipeFromModel));
       })
       .finally(() => setIsLoading(false));
   });
@@ -41,8 +40,7 @@ export function Landing() {
           </div>
         }
       >
-        <NamedHr name="Recipes" />
-        <RecipeList recipes={recipes()} />
+        <RecipeListView recipes={recipes()} />
       </Show>
     </>
   );
