@@ -12,29 +12,29 @@ Recipie is built on [PocketBase](https://pocketbase.io/) with a [solidjs](https:
 
 1. Install [bun](https://bun.sh/):
 
-    ```bash
-    npm install -g bun
-    ```
+   ```bash
+   npm install -g bun
+   ```
 
 1. and install all dependencies:
 
-    ```bash
-    bun install
-    ```
+   ```bash
+   bun install
+   ```
 
 1. Start the backend server:
 
-    ```bash
-    bun run server
-    ```
+   ```bash
+   bun run server
+   ```
 
 1. In a separate terminal, start the client dev server:
 
-    ```bash
-    bun run client
-    ```
+   ```bash
+   bun run client
+   ```
 
-    Which should be available at http://localhost:5173.
+   Which should be available at http://localhost:5173.
 
 ### App Setup
 

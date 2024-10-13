@@ -3,25 +3,24 @@ import { useAuthContext } from "src/AuthContext";
 import { usePocketBaseContext } from "src/PocketBaseContext";
 import { ActionBar } from "src/components/common/ActionBar";
 import { Loader } from "src/components/common/Loader";
-import { Grid } from "src/components/grid/Grid";
-import { BulkSmartImportCard } from "src/components/smartImport/BulkImportCard";
-import { bulkSmartImportFromModel } from "src/lead/util";
-import { BulkSmartImport } from "src/model/model";
+import { RecipeListView } from "src/components/list/RecipeListView";
+import { recipeFromModel } from "src/lead/util";
+import { Recipe } from "src/model/model";
 
-export function Landing() {
+export function RecipeListContainer() {
   const pocketBase = usePocketBaseContext()!;
   const [authData] = useAuthContext()!;
-  const [drafts, setDrafts] = createSignal<BulkSmartImport[]>([]);
+  const [recipes, setRecipes] = createSignal<Recipe[]>([]);
   const [isLoading, setIsLoading] = createSignal(true);
 
   createEffect(() => {
     pocketBase()
-      .collection("bulkSmartImports")
-      .getList(1, 12, {
+      .collection("recipes")
+      .getFullList({
         filter: pocketBase().filter(`creator = "${authData()?.id}"`),
       })
       .then((result) => {
-        setDrafts(result.items.map(bulkSmartImportFromModel));
+        setRecipes(result.map(recipeFromModel));
       })
       .finally(() => setIsLoading(false));
   });
@@ -29,8 +28,8 @@ export function Landing() {
   return (
     <>
       <ActionBar>
-        <a class="hover:underline" href="/app/bulkSmartImports/new">
-          + Import Recipes
+        <a class="underline" href="/app/smartImports/new">
+          + Import
         </a>
       </ActionBar>
       <Show
@@ -41,13 +40,7 @@ export function Landing() {
           </div>
         }
       >
-        <Grid
-          sections={{
-            "Draft Imports": drafts().map((draft) => (
-              <BulkSmartImportCard bulkSmartImport={draft} />
-            )),
-          }}
-        />
+        <RecipeListView recipes={recipes()} />
       </Show>
     </>
   );

@@ -50,12 +50,7 @@ export function Recipe(props: { recipe: RecipeRecord }) {
       </ul>
       <h2 class="mb-6 mt-6">Instructions</h2>
       <ol class="list-decimal">
-        <For
-          each={
-            (props.recipe.instructions as unknown as { instructions: string[] })
-              .instructions
-          }
-        >
+        <For each={props.recipe.instructions}>
           {(instruction: string) => <li class="ml-6 text-sm">{instruction}</li>}
         </For>
       </ol>

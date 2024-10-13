@@ -4,7 +4,7 @@ export interface Recipe {
   name: string;
   isDraft: boolean;
   ingredients: Ingredient[];
-  instructions: string;
+  instructions: string[];
   prepTimeMinutes: number;
   totalTimeMinutes: number;
 }
@@ -18,16 +18,9 @@ export interface Ingredient {
 
 export interface SmartImport {
   id: string;
+  created: string;
   status: "success" | "processing" | "error";
   url: string;
-  rawText: string;
   error: any;
-  recipes: Recipe[];
-}
-
-export interface BulkSmartImport {
-  id: string;
-  imports: string[];
-  status: "success" | "processing" | "error";
-  created: string;
+  recipes: string[];
 }

@@ -20,8 +20,9 @@ import (
 func main() {
 	app := pocketbase.New()
 
-	smartImportService := NewSmartImportService(app)
-	smartImportHandler := NewSmartImportHandler(app, smartImportService)
+	initializer := NewSmartImportInitializer(app)
+	smartImportHandler := NewSmartImportHandler(app, initializer)
+	worker := NewSmartImportWorker(app)
 
 	app.OnBeforeServe().Add(func(e *core.ServeEvent) error {
 		e.Router.POST("/smartImport", func(c echo.Context) error {
@@ -34,6 +35,18 @@ func main() {
 
 			return smartImportHandler.SmartImport(c, authRecord)
 		}, apis.RequireRecordAuth())
+		return nil
+	})
+
+	app.OnModelAfterCreate("smartImports").Add(func(e *core.ModelEvent) error {
+
+		go func() {
+			err := worker.SmartImport(e)
+			if err != nil {
+				app.Logger().Error("error processing smart import creation event", "err", err, "id", e.Model.GetId())
+			}
+		}()
+
 		return nil
 	})
 
