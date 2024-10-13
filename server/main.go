@@ -38,7 +38,17 @@ func main() {
 		return nil
 	})
 
-	app.OnModelAfterCreate("smartImports").Add(worker.SmartImport)
+	app.OnModelAfterCreate("smartImports").Add(func(e *core.ModelEvent) error {
+
+		go func() {
+			err := worker.SmartImport(e)
+			if err != nil {
+				app.Logger().Error("error processing smart import creation event", "err", err, "id", e.Model.GetId())
+			}
+		}()
+
+		return nil
+	})
 
 	migratecmd.MustRegister(app, app.RootCmd, migratecmd.Config{})
 

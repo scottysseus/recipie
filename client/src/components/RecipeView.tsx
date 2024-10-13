@@ -2,6 +2,7 @@ import { useParams } from "@solidjs/router";
 import { Match, Switch, createEffect, createSignal } from "solid-js";
 import { usePocketBaseContext } from "src/PocketBaseContext";
 import { Loader } from "src/components/common/Loader";
+import { NamedHr } from "src/components/common/NamedHr";
 import { Recipe } from "src/components/common/Recipe";
 import { recipeFromModel } from "src/lead/util";
 import { Recipe as RecipeModel } from "src/model/model";
@@ -29,14 +30,17 @@ export function RecipeView() {
   });
 
   return (
-    <Switch fallback={<RecipeError />}>
-      <Match when={isLoading()}>
-        <Loader />
-      </Match>
-      <Match when={recipe()}>
-        <Recipe recipe={recipe()!} />
-      </Match>
-    </Switch>
+    <>
+      <NamedHr name={`Recipe ${recipe()?.id ?? "???"}`} />
+      <Switch fallback={<RecipeError />}>
+        <Match when={isLoading()}>
+          <Loader />
+        </Match>
+        <Match when={recipe()}>
+          <Recipe recipe={recipe()!} />
+        </Match>
+      </Switch>
+    </>
   );
 }
 
