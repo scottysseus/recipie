@@ -16,7 +16,7 @@ export function BulkSmartImportForm() {
           Cancel
         </a>
       </ActionBar>
-      <div class="flex flex-col pl-24 pr-24">
+      <div class="flex flex-col">
         <label>Enter one recipe URL per line:</label>
         <textarea
           class="left-0 right-0 mb-3 ml-auto mr-auto block h-32 min-w-full border-2 border-black p-1"
@@ -29,8 +29,8 @@ export function BulkSmartImportForm() {
           class="hover:underline"
           onClick={async () => {
             smartImport(pocketBase(), recipeUrls())
-              .then((json: { id: string }) => {
-                navigate(`/app/bulkSmartImports/${json.id}`);
+              .then(() => {
+                navigate(`/app`);
               })
               // TODO handle errors here
               .catch((error) => {

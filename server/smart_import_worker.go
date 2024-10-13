@@ -4,25 +4,23 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log/slog"
 
+	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/daos"
 	"github.com/pocketbase/pocketbase/models"
 )
 
 type SmartImportWorker struct {
-	logger *slog.Logger
+	app *pocketbase.PocketBase
 }
 
-func NewSmartImportWorker(logger *slog.Logger) *SmartImportWorker {
-	return &SmartImportWorker{logger: logger}
+func NewSmartImportWorker(app *pocketbase.PocketBase) *SmartImportWorker {
+	return &SmartImportWorker{app: app}
 }
 
 func (worker *SmartImportWorker) SmartImport(event *core.ModelEvent) error {
-	if !event.Model.IsNew() {
-		return nil
-	}
+	worker.app.Logger().Debug("created smart import", "id", event.Model.GetId())
 
 	record, err := event.Dao.FindRecordById("smartImports", event.Model.GetId())
 	if err != nil {
@@ -37,19 +35,19 @@ func (worker *SmartImportWorker) SmartImport(event *core.ModelEvent) error {
 
 	rawRecipeText, err := ScrapeRecipe(url)
 	if err != nil {
-		UpdateImportFailureStatusOrLog(event.Dao, worker.logger, record.Id, url, err)
+		UpdateImportFailureStatusOrLog(worker.app, record.Id, url, err)
 		return err
 	}
 
 	vertexResponse, err := ExtractRecipe(rawRecipeText)
 	if err != nil {
 		err = fmt.Errorf("failed to retreive parsed recipe from vertex: %w", err)
-		UpdateImportFailureStatusOrLog(event.Dao, worker.logger, record.Id, url, err)
+		UpdateImportFailureStatusOrLog(worker.app, record.Id, url, err)
 		return err
 	}
 	err = insertRecipe(event.Dao, vertexResponse, creator, record.Id, url)
 	if err != nil {
-		UpdateImportFailureStatusOrLog(event.Dao, worker.logger, record.Id, url, err)
+		UpdateImportFailureStatusOrLog(worker.app, record.Id, url, err)
 		return err
 	}
 

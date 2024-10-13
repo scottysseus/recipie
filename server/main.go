@@ -22,7 +22,7 @@ func main() {
 
 	initializer := NewSmartImportInitializer(app)
 	smartImportHandler := NewSmartImportHandler(app, initializer)
-	worker := NewSmartImportWorker(app.Logger())
+	worker := NewSmartImportWorker(app)
 
 	app.OnBeforeServe().Add(func(e *core.ServeEvent) error {
 		e.Router.POST("/smartImport", func(c echo.Context) error {
@@ -38,7 +38,7 @@ func main() {
 		return nil
 	})
 
-	app.OnModelAfterUpdate("smartImports").Add(worker.SmartImport)
+	app.OnModelAfterCreate("smartImports").Add(worker.SmartImport)
 
 	migratecmd.MustRegister(app, app.RootCmd, migratecmd.Config{})
 

@@ -1,4 +1,4 @@
-import { Card } from "src/components/grid/Card";
+import { Card } from "src/components/list/Card";
 import { Recipe } from "src/model/model";
 
 export function RecipeCard({ recipe, path }: { recipe: Recipe; path: string }) {

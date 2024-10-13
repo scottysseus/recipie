@@ -2,16 +2,15 @@ package main
 
 import (
 	"fmt"
-	"log/slog"
 
-	"github.com/pocketbase/pocketbase/daos"
+	"github.com/pocketbase/pocketbase"
 )
 
-func UpdateImportFailureStatusOrLog(dao *daos.Dao, logger *slog.Logger,
+func UpdateImportFailureStatusOrLog(app *pocketbase.PocketBase,
 	id string, url string, importErr error) {
-	record, err := dao.FindRecordById("smartImports", id)
+	record, err := app.Dao().FindRecordById("smartImports", id)
 	if err != nil {
-		logger.Error("failed to retrieve import record after encountering an error",
+		app.Logger().Error("failed to retrieve import record after encountering an error",
 			"id", id, "collection", "smartImports", "importErr", importErr, "err", err)
 		return
 	}
@@ -19,9 +18,9 @@ func UpdateImportFailureStatusOrLog(dao *daos.Dao, logger *slog.Logger,
 	record.Set("status", SmartImportStatusError)
 	record.Set("error", ErrorFieldValueFromError(importErr))
 	record.Set("url", url)
-	err = dao.SaveRecord(record)
+	err = app.Dao().SaveRecord(record)
 	if err != nil {
-		logger.Error("failed to update import status after encountering an error",
+		app.Logger().Error("failed to update import status after encountering an error",
 			"id", id, "collection", "smartImports", "importErr", importErr, "err", err)
 		return
 	}
