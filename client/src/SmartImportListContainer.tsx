@@ -22,7 +22,7 @@ export function SmartImportListContainer() {
         ? `&& status = "${statusFilter()}"`
         : ""
     } ${getTimeFilterString(timeFilter())}`;
-    console.log(filter);
+
     pocketBase()
       .collection("smartImports")
       .getFullList({
@@ -44,12 +44,20 @@ export function SmartImportListContainer() {
         setIsLoading(false);
       }
 
+      const filter = () =>
+        `creator = "${authData()?.id}" ${
+          !statusFilter() || statusFilter() !== "all"
+            ? `&& status = "${statusFilter()}"`
+            : ""
+        } ${getTimeFilterString(timeFilter())}`;
+
       return pocketBase()
         .collection("smartImports")
         .subscribe(
           "*",
           (e) => {
             const newImport = smartImportFromModel(e.record);
+
             switch (e.action) {
               case "create":
                 setSmartImports((prev) => [newImport, ...prev]);
@@ -60,9 +68,11 @@ export function SmartImportListContainer() {
                     return smartImport.id === newImport.id;
                   });
                   if (index) {
-                    return [...prev.splice(index, 1, newImport)];
+                    const newArray = [...prev];
+                    newArray.splice(index, 1, newImport);
+                    return newArray;
                   }
-                  return prev;
+                  return [newImport, ...prev];
                 });
                 break;
               case "delete":
@@ -71,10 +81,9 @@ export function SmartImportListContainer() {
                     return smartImport.id === newImport.id;
                   });
                   if (index) {
-                    if (prev.length > 1) {
-                      return [...prev.splice(index, 1)];
-                    }
-                    return [];
+                    const newArray = [...prev];
+                    newArray.splice(index, 1);
+                    return newArray;
                   }
                   return prev;
                 });
@@ -82,7 +91,7 @@ export function SmartImportListContainer() {
             }
           },
           {
-            filter: pocketBase().filter(`creator = "${authData()?.id}"`),
+            filter: pocketBase().filter(filter()),
           },
         );
     },

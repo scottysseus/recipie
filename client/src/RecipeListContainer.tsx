@@ -51,12 +51,11 @@ export function RecipeListContainer() {
                     return recipe.id === newRecipe.id;
                   });
                   if (index) {
-                    if (prev.length > 1) {
-                      return [...prev.splice(index, 1, newRecipe)];
-                    }
-                    return [newRecipe];
+                    const newArray = [...prev];
+                    newArray.splice(index, 1, newRecipe);
+                    return newArray;
                   }
-                  return prev;
+                  return [newRecipe, ...prev];
                 });
 
                 break;
@@ -66,11 +65,9 @@ export function RecipeListContainer() {
                     return recipe.id === newRecipe.id;
                   });
                   if (index) {
-                    if (prev.length > 1) {
-                      return [...prev.splice(index, 1)];
-                    } else {
-                      return [];
-                    }
+                    const newArray = [...prev];
+                    newArray.splice(index, 1);
+                    return newArray;
                   }
                   return prev;
                 });
