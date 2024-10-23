@@ -1,3 +1,4 @@
+import { UnsubscribeFunc } from "pocketbase";
 import { Show, createEffect, createSignal } from "solid-js";
 import { useAuthContext } from "src/AuthContext";
 import { usePocketBaseContext } from "src/PocketBaseContext";
@@ -13,7 +14,7 @@ export function RecipeListContainer() {
   const [recipes, setRecipes] = createSignal<Recipe[]>([]);
   const [isLoading, setIsLoading] = createSignal(true);
 
-  createEffect(() => {
+  createEffect(() =>
     pocketBase()
       .collection("recipes")
       .getFullList({
@@ -22,8 +23,67 @@ export function RecipeListContainer() {
       .then((result) => {
         setRecipes(result.map(recipeFromModel));
       })
-      .finally(() => setIsLoading(false));
-  });
+      .finally(() => setIsLoading(false)),
+  );
+
+  createEffect(
+    async (prevUnsubscribe: Promise<UnsubscribeFunc> | undefined) => {
+      if (prevUnsubscribe) {
+        setIsLoading(true);
+        await (
+          await prevUnsubscribe
+        )();
+        setIsLoading(false);
+      }
+      return pocketBase()
+        .collection("recipes")
+        .subscribe(
+          "*",
+          (e) => {
+            const newRecipe = recipeFromModel(e.record);
+            switch (e.action) {
+              case "create":
+                setRecipes((prev) => [newRecipe, ...prev]);
+                break;
+              case "update":
+                setRecipes((prev) => {
+                  const index = prev.findIndex((recipe) => {
+                    return recipe.id === newRecipe.id;
+                  });
+                  if (index) {
+                    if (prev.length > 1) {
+                      return [...prev.splice(index, 1, newRecipe)];
+                    }
+                    return [newRecipe];
+                  }
+                  return prev;
+                });
+
+                break;
+              case "delete":
+                setRecipes((prev) => {
+                  const index = prev.findIndex((recipe) => {
+                    return recipe.id === newRecipe.id;
+                  });
+                  if (index) {
+                    if (prev.length > 1) {
+                      return [...prev.splice(index, 1)];
+                    } else {
+                      return [];
+                    }
+                  }
+                  return prev;
+                });
+
+                break;
+            }
+          },
+          {
+            filter: pocketBase().filter(`creator = "${authData()?.id}"`),
+          },
+        );
+    },
+  );
 
   return (
     <>

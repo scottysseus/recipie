@@ -3,13 +3,13 @@ import { NamedHr } from "src/components/common/NamedHr";
 import { RecipeCard } from "src/components/list/RecipeCard";
 import { Recipe } from "src/model/model";
 
-export function RecipeListView({ recipes }: { recipes: Recipe[] }) {
+export function RecipeListView(props: { recipes: Recipe[] }) {
   return (
     <>
       <NamedHr name="Recipes" />
-      <Show when={recipes.length > 0} fallback={Placeholder()}>
+      <Show when={props.recipes.length > 0} fallback={Placeholder()}>
         <div class="flex flex-col">
-          <For each={recipes}>
+          <For each={props.recipes}>
             {(recipe) => (
               <div class="mb-3">
                 <RecipeCard

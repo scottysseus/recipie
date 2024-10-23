@@ -1,3 +1,4 @@
+import { UnsubscribeFunc } from "pocketbase";
 import { Show, createEffect, createSignal } from "solid-js";
 import { useAuthContext } from "src/AuthContext";
 import { usePocketBaseContext } from "src/PocketBaseContext";
@@ -12,17 +13,16 @@ export function SmartImportListContainer() {
   const [authData] = useAuthContext()!;
   const [smartImports, setSmartImports] = createSignal<SmartImport[]>([]);
   const [isLoading, setIsLoading] = createSignal(true);
-  const [statusFilter, setStatusFilter] = createSignal<string>("");
-  const [timeFilter, setTimeFilter] = createSignal<string>("");
+  const [statusFilter, setStatusFilter] = createSignal<string>("all");
+  const [timeFilter, setTimeFilter] = createSignal<string>("today");
 
   createEffect(() => {
-    setIsLoading(true);
     pocketBase()
       .collection("smartImports")
       .getFullList({
         filter: pocketBase().filter(
           `creator = "${authData()?.id}" ${
-            statusFilter() ? `&& status = "${statusFilter()}"` : ""
+            statusFilter() !== "all" ? `&& status = "${statusFilter()}"` : ""
           } ${getTimeFilterString(timeFilter())}`,
         ),
       })
@@ -31,6 +31,60 @@ export function SmartImportListContainer() {
       })
       .finally(() => setIsLoading(false));
   });
+
+  createEffect(
+    async (prevUnsubscribe: Promise<UnsubscribeFunc> | undefined) => {
+      if (prevUnsubscribe) {
+        setIsLoading(true);
+        await (
+          await prevUnsubscribe
+        )();
+        setIsLoading(false);
+      }
+
+      return pocketBase()
+        .collection("smartImports")
+        .subscribe(
+          "*",
+          (e) => {
+            const newImport = smartImportFromModel(e.record);
+            switch (e.action) {
+              case "create":
+                setSmartImports((prev) => [newImport, ...prev]);
+                break;
+              case "update":
+                setSmartImports((prev) => {
+                  const index = prev.findIndex((smartImport) => {
+                    return smartImport.id === newImport.id;
+                  });
+                  if (index) {
+                    return [...prev.splice(index, 1, newImport)];
+                  }
+                  return prev;
+                });
+                break;
+              case "delete":
+                setSmartImports((prev) => {
+                  const index = prev.findIndex((smartImport) => {
+                    return smartImport.id === newImport.id;
+                  });
+                  if (index) {
+                    if (prev.length > 1) {
+                      return [...prev.splice(index, 1)];
+                    }
+                    return [];
+                  }
+                  return prev;
+                });
+                break;
+            }
+          },
+          {
+            filter: pocketBase().filter(`creator = "${authData()?.id}"`),
+          },
+        );
+    },
+  );
 
   return (
     <>
@@ -74,4 +128,6 @@ function getTimeFilterString(timeFilter: string) {
   if (timeFilter === "today") {
     return " && (created >= @todayStart && created < @todayEnd)";
   }
+
+  return "";
 }

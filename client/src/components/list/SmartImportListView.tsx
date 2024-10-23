@@ -3,17 +3,13 @@ import { NamedHr } from "src/components/common/NamedHr";
 import { SmartImportCard } from "src/components/list/SmartImportCard";
 import { SmartImport } from "src/model/model";
 
-export function SmartImportListView({
-  smartImports,
-}: {
-  smartImports: SmartImport[];
-}) {
+export function SmartImportListView(props: { smartImports: SmartImport[] }) {
   return (
     <>
       <NamedHr name="Smart Imports" />
-      <Show when={smartImports.length > 0} fallback={Placeholder()}>
+      <Show when={props.smartImports.length > 0} fallback={Placeholder()}>
         <div class="flex flex-col">
-          <For each={smartImports}>
+          <For each={props.smartImports}>
             {(smartImport) => (
               <div class="mb-3">
                 <SmartImportCard
