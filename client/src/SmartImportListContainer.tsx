@@ -17,14 +17,16 @@ export function SmartImportListContainer() {
   const [timeFilter, setTimeFilter] = createSignal<string>("today");
 
   createEffect(() => {
+    const filter = `creator = "${authData()?.id}" ${
+      !statusFilter() || statusFilter() !== "all"
+        ? `&& status = "${statusFilter()}"`
+        : ""
+    } ${getTimeFilterString(timeFilter())}`;
+    console.log(filter);
     pocketBase()
       .collection("smartImports")
       .getFullList({
-        filter: pocketBase().filter(
-          `creator = "${authData()?.id}" ${
-            statusFilter() !== "all" ? `&& status = "${statusFilter()}"` : ""
-          } ${getTimeFilterString(timeFilter())}`,
-        ),
+        filter: pocketBase().filter(filter),
       })
       .then((result) => {
         setSmartImports(result.map(smartImportFromModel));
@@ -93,7 +95,7 @@ export function SmartImportListContainer() {
           class="mr-3 bg-white"
           onChange={(event) => setStatusFilter(event.target.value)}
         >
-          <option value="">All</option>
+          <option value="all">All</option>
           <option value="success">Successful</option>
           <option value="processing">In Progress</option>
           <option value="error">Failed</option>
