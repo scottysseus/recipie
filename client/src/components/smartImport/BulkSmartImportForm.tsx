@@ -48,16 +48,15 @@ export function BulkSmartImportForm() {
 function smartImport(
   pocketBase: PocketBase | undefined,
   recipeUrls: string[],
-): Promise<{ id: string }> {
+): Promise<any> {
   if (!pocketBase) {
-    return Promise.resolve({ id: "" });
+    return Promise.resolve();
   }
-  return pocketBase.send("/smartImport", {
-    method: "POST",
-    body: JSON.stringify({
-      items: recipeUrls.map((url) => ({
-        url: url.trim(),
-      })),
-    }),
-  });
+  return Promise.all(
+    recipeUrls.map((url) =>
+      pocketBase.collection("smartImports").create({
+        url,
+      }),
+    ),
+  );
 }
