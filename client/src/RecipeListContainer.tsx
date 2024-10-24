@@ -7,6 +7,7 @@ import { Loader } from "src/components/common/Loader";
 import { RecipeListView } from "src/components/list/RecipeListView";
 import { recipeFromModel } from "src/lead/util";
 import { Recipe } from "src/model/model";
+import { arrayUpdateSubscriptionCallback } from "src/pb/util";
 
 export function RecipeListContainer() {
   const pocketBase = usePocketBaseContext()!;
@@ -41,39 +42,7 @@ export function RecipeListContainer() {
           "*",
           (e) => {
             const newRecipe = recipeFromModel(e.record);
-            switch (e.action) {
-              case "create":
-                setRecipes((prev) => [newRecipe, ...prev]);
-                break;
-              case "update":
-                setRecipes((prev) => {
-                  const index = prev.findIndex((recipe) => {
-                    return recipe.id === newRecipe.id;
-                  });
-                  if (index) {
-                    const newArray = [...prev];
-                    newArray.splice(index, 1, newRecipe);
-                    return newArray;
-                  }
-                  return [newRecipe, ...prev];
-                });
-
-                break;
-              case "delete":
-                setRecipes((prev) => {
-                  const index = prev.findIndex((recipe) => {
-                    return recipe.id === newRecipe.id;
-                  });
-                  if (index) {
-                    const newArray = [...prev];
-                    newArray.splice(index, 1);
-                    return newArray;
-                  }
-                  return prev;
-                });
-
-                break;
-            }
+            arrayUpdateSubscriptionCallback(newRecipe, e.action, setRecipes);
           },
           {
             filter: pocketBase().filter(`creator = "${authData()?.id}"`),

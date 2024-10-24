@@ -7,6 +7,7 @@ import { Loader } from "src/components/common/Loader";
 import { SmartImportListView } from "src/components/list/SmartImportListView";
 import { smartImportFromModel } from "src/lead/util";
 import { SmartImport } from "src/model/model";
+import { arrayUpdateSubscriptionCallback } from "src/pb/util";
 
 export function SmartImportListContainer() {
   const pocketBase = usePocketBaseContext()!;
@@ -57,38 +58,11 @@ export function SmartImportListContainer() {
           "*",
           (e) => {
             const newImport = smartImportFromModel(e.record);
-
-            switch (e.action) {
-              case "create":
-                setSmartImports((prev) => [newImport, ...prev]);
-                break;
-              case "update":
-                setSmartImports((prev) => {
-                  const index = prev.findIndex((smartImport) => {
-                    return smartImport.id === newImport.id;
-                  });
-                  if (index) {
-                    const newArray = [...prev];
-                    newArray.splice(index, 1, newImport);
-                    return newArray;
-                  }
-                  return [newImport, ...prev];
-                });
-                break;
-              case "delete":
-                setSmartImports((prev) => {
-                  const index = prev.findIndex((smartImport) => {
-                    return smartImport.id === newImport.id;
-                  });
-                  if (index) {
-                    const newArray = [...prev];
-                    newArray.splice(index, 1);
-                    return newArray;
-                  }
-                  return prev;
-                });
-                break;
-            }
+            arrayUpdateSubscriptionCallback(
+              newImport,
+              e.action,
+              setSmartImports,
+            );
           },
           {
             filter: pocketBase().filter(filter()),

@@ -19,7 +19,7 @@ jobs:
       - run: bun install --frozen-lockfile
       - run: bun run build:client
         env:
-          VITE_PB_URL: https://recipie-server-767578206397.us-central1.run.app
+          VITE_PB_URL: https://recipie-server.scottysseus.me
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}

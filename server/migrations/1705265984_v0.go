@@ -110,15 +110,6 @@ func initSchema(dao *daos.Dao) error {
 		UpdateRule: types.Pointer("@request.auth.id != ''"),
 		DeleteRule: types.Pointer("@request.auth.id != ''"),
 	}
-
-	smartImportsCollection.Schema.AddField(&schema.SchemaField{
-		Name: "parent",
-		Type: schema.FieldTypeRelation,
-		Options: &schema.RelationOptions{
-			MaxSelect:    types.Pointer(1),
-			CollectionId: smartImportsCollection.Id,
-		},
-	})
 	return createIfNotExist(dao, smartImportsCollection)
 }
 
