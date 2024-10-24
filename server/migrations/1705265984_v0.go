@@ -106,7 +106,7 @@ func initSchema(dao *daos.Dao) error {
 		}),
 		ListRule:   types.Pointer("@request.auth.id != ''"),
 		ViewRule:   types.Pointer("@request.auth.id != ''"),
-		CreateRule: types.Pointer("@request.auth.id != ''"),
+		CreateRule: nil,
 		UpdateRule: types.Pointer("@request.auth.id != ''"),
 		DeleteRule: types.Pointer("@request.auth.id != ''"),
 	}

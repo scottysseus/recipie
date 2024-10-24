@@ -3,9 +3,7 @@ package main
 import (
 	"log"
 
-	"github.com/labstack/echo/v5"
 	"github.com/pocketbase/pocketbase"
-	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/plugins/migratecmd"
 
@@ -19,24 +17,8 @@ import (
 
 func main() {
 	app := pocketbase.New()
-
-	initializer := NewSmartImportInitializer(app)
-	smartImportHandler := NewSmartImportHandler(app, initializer)
+	
 	worker := NewSmartImportWorker(app)
-
-	app.OnBeforeServe().Add(func(e *core.ServeEvent) error {
-		e.Router.POST("/smartImport", func(c echo.Context) error {
-			info := apis.RequestInfo(c)
-
-			authRecord := info.AuthRecord
-			if authRecord == nil {
-				return c.String(500, "unable to extract auth record")
-			}
-
-			return smartImportHandler.SmartImport(c, authRecord)
-		}, apis.RequireRecordAuth())
-		return nil
-	})
 
 	app.OnModelAfterCreate("smartImports").Add(func(e *core.ModelEvent) error {
 
