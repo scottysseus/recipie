@@ -48,7 +48,7 @@ export function BulkSmartImportForm() {
 function smartImport(
   pocketBase: PocketBase | undefined,
   recipeUrls: string[],
-): Promise<any> {
+): Promise<unknown> {
   if (!pocketBase) {
     return Promise.resolve();
   }
