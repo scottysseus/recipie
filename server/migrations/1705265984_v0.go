@@ -18,6 +18,8 @@ func init() {
 
 		dao := daos.New(db)
 
+		
+
 		return initSchema(dao)
 	}, func(db dbx.Builder) error {
 		// add down queries...
@@ -29,6 +31,28 @@ func init() {
 func initSchema(dao *daos.Dao) error {
 	userCollection, err := dao.FindCollectionByNameOrId("users")
 	if err != nil {
+		return err
+	}
+	
+
+	// allowedUsers is a collection visible to only admins that controls a list of 
+	// emails of users who are allowed to access the app.
+	allowedUsersCollection := &models.Collection{
+		Name: "allowedUsers",
+		Type: models.CollectionTypeBase,
+		Schema: schema.NewSchema(&schema.SchemaField{
+			Name:     "email",
+			Required: true,
+			Type:     schema.FieldTypeEmail,
+		}),
+		ListRule:   nil,
+		ViewRule:   nil,
+		CreateRule: nil,
+		UpdateRule: nil,
+		DeleteRule: nil,
+	}
+						
+	if err = createIfNotExist(dao, allowedUsersCollection); err != nil {
 		return err
 	}
 
@@ -106,7 +130,7 @@ func initSchema(dao *daos.Dao) error {
 		}),
 		ListRule:   types.Pointer("@request.auth.id != ''"),
 		ViewRule:   types.Pointer("@request.auth.id != ''"),
-		CreateRule: nil,
+		CreateRule: types.Pointer("allowedUsers.email ?= @request.auth.email"),
 		UpdateRule: types.Pointer("@request.auth.id != ''"),
 		DeleteRule: types.Pointer("@request.auth.id != ''"),
 	}
