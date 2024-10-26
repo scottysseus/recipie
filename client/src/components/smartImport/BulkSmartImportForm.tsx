@@ -1,6 +1,7 @@
 import { useNavigate } from "@solidjs/router";
 import PocketBase from "pocketbase";
 import { createSignal } from "solid-js";
+import { useAuthContext } from "src/AuthContext";
 import { ActionBar } from "src/components/common/ActionBar";
 import { usePocketBaseContext } from "src/PocketBaseContext";
 
@@ -8,6 +9,7 @@ export function BulkSmartImportForm() {
   const navigate = useNavigate();
   const [recipeUrls, setRecipeUrls] = createSignal<string[]>([]);
   const pocketBase = usePocketBaseContext()!;
+  const [authData] = useAuthContext()!;
 
   return (
     <>
@@ -28,7 +30,7 @@ export function BulkSmartImportForm() {
         <button
           class="hover:underline"
           onClick={async () => {
-            smartImport(pocketBase(), recipeUrls())
+            smartImport(authData()?.id, pocketBase(), recipeUrls())
               // TODO handle errors here
               .catch((error) => {
                 console.log(error);
@@ -46,6 +48,7 @@ export function BulkSmartImportForm() {
 }
 
 function smartImport(
+  creator: string,
   pocketBase: PocketBase | undefined,
   recipeUrls: string[],
 ): Promise<unknown> {
@@ -55,7 +58,9 @@ function smartImport(
   return Promise.all(
     recipeUrls.map((url) =>
       pocketBase.collection("smartImports").create({
+        creator,
         url,
+        status: "processing",
       }),
     ),
   );

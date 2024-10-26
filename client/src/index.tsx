@@ -1,16 +1,16 @@
 /* @refresh reload */
 import { Route, Router } from "@solidjs/router";
 import { render } from "solid-js/web";
-import { SmartImportListContainer } from "src/SmartImportListContainer";
 import { RecipeView } from "src/components/RecipeView";
 import { SmartImportView } from "src/components/list/SmartImportView";
+import { SmartImportListContainer } from "src/components/views/SmartImportListContainer";
 import { AuthContextProvider } from "./AuthContext";
 import Container from "./Container";
-import { Greeting } from "./Greeting";
 import { PocketBaseContextProvider } from "./PocketBaseContext";
-import { RecipeListContainer } from "./RecipeListContainer";
-import { SignIn } from "./SignIn";
 import { BulkSmartImportForm } from "./components/smartImport/BulkSmartImportForm";
+import { Greeting } from "./components/views/Greeting";
+import { RecipeListContainer } from "./components/views/RecipeListContainer";
+import { SignIn } from "./components/views/SignIn";
 import "./index.css";
 
 const root = document.getElementById("root");

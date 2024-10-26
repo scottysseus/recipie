@@ -113,6 +113,7 @@ func initSchema(dao *daos.Dao) error {
 			Name: "status",
 			Type: schema.FieldTypeSelect,
 			Options: &schema.SelectOptions{
+				MaxSelect: 1,
 				Values: []string{"success", "error", "processing"},
 			},
 		}, &schema.SchemaField{

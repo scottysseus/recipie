@@ -1,6 +1,6 @@
 import { useNavigate } from "@solidjs/router";
 import { createEffect } from "solid-js";
-import { useAuthContext } from "./AuthContext";
+import { useAuthContext } from "../../AuthContext";
 
 export function Greeting() {
   const [authData] = useAuthContext()!;

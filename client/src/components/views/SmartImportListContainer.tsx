@@ -1,5 +1,5 @@
 import { UnsubscribeFunc } from "pocketbase";
-import { Show, createEffect, createSignal } from "solid-js";
+import { Show, createEffect, createSignal, onCleanup } from "solid-js";
 import { useAuthContext } from "src/AuthContext";
 import { usePocketBaseContext } from "src/PocketBaseContext";
 import { ActionBar } from "src/components/common/ActionBar";
@@ -7,7 +7,10 @@ import { Loader } from "src/components/common/Loader";
 import { SmartImportListView } from "src/components/list/SmartImportListView";
 import { smartImportFromModel } from "src/lead/util";
 import { SmartImport } from "src/model/model";
-import { arrayUpdateSubscriptionCallback } from "src/pb/util";
+import {
+  arrayUpdateSubscriptionCallback,
+  getDefaultUnsubscribeFunc,
+} from "src/pb/util";
 
 export function SmartImportListContainer() {
   const pocketBase = usePocketBaseContext()!;
@@ -16,6 +19,10 @@ export function SmartImportListContainer() {
   const [isLoading, setIsLoading] = createSignal(true);
   const [statusFilter, setStatusFilter] = createSignal<string>("all");
   const [timeFilter, setTimeFilter] = createSignal<string>("today");
+
+  const [unsubscribeFunc, setUnsubscribeFunc] = createSignal<
+    Promise<UnsubscribeFunc>
+  >(getDefaultUnsubscribeFunc());
 
   createEffect(() => {
     const filter = `creator = "${authData()?.id}" ${
@@ -30,6 +37,7 @@ export function SmartImportListContainer() {
         filter: pocketBase().filter(filter),
       })
       .then((result) => {
+        console.log("getFullList", result);
         setSmartImports(result.map(smartImportFromModel));
       })
       .finally(() => setIsLoading(false));
@@ -38,6 +46,7 @@ export function SmartImportListContainer() {
   createEffect(
     async (prevUnsubscribe: Promise<UnsubscribeFunc> | undefined) => {
       if (prevUnsubscribe) {
+        setUnsubscribeFunc(getDefaultUnsubscribeFunc());
         setIsLoading(true);
         await (
           await prevUnsubscribe
@@ -52,12 +61,13 @@ export function SmartImportListContainer() {
             : ""
         } ${getTimeFilterString(timeFilter())}`;
 
-      return pocketBase()
+      const unsubscribeFunc = pocketBase()
         .collection("smartImports")
         .subscribe(
           "*",
           (e) => {
             const newImport = smartImportFromModel(e.record);
+            console.log("subscribe", e);
             arrayUpdateSubscriptionCallback(
               newImport,
               e.action,
@@ -68,8 +78,17 @@ export function SmartImportListContainer() {
             filter: pocketBase().filter(filter()),
           },
         );
+
+      setUnsubscribeFunc(unsubscribeFunc);
+      return unsubscribeFunc;
     },
   );
+
+  onCleanup(async () => {
+    await (
+      await unsubscribeFunc()
+    )();
+  });
 
   return (
     <>

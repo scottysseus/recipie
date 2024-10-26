@@ -1,5 +1,5 @@
 import { UnsubscribeFunc } from "pocketbase";
-import { Show, createEffect, createSignal } from "solid-js";
+import { Show, createEffect, createSignal, onCleanup } from "solid-js";
 import { useAuthContext } from "src/AuthContext";
 import { usePocketBaseContext } from "src/PocketBaseContext";
 import { ActionBar } from "src/components/common/ActionBar";
@@ -7,13 +7,20 @@ import { Loader } from "src/components/common/Loader";
 import { RecipeListView } from "src/components/list/RecipeListView";
 import { recipeFromModel } from "src/lead/util";
 import { Recipe } from "src/model/model";
-import { arrayUpdateSubscriptionCallback } from "src/pb/util";
+import {
+  arrayUpdateSubscriptionCallback,
+  getDefaultUnsubscribeFunc,
+} from "src/pb/util";
 
 export function RecipeListContainer() {
   const pocketBase = usePocketBaseContext()!;
   const [authData] = useAuthContext()!;
   const [recipes, setRecipes] = createSignal<Recipe[]>([]);
   const [isLoading, setIsLoading] = createSignal(true);
+
+  const [unsubscribeFunc, setUnsubscribeFunc] = createSignal<
+    Promise<UnsubscribeFunc>
+  >(getDefaultUnsubscribeFunc());
 
   createEffect(() =>
     pocketBase()
@@ -30,13 +37,14 @@ export function RecipeListContainer() {
   createEffect(
     async (prevUnsubscribe: Promise<UnsubscribeFunc> | undefined) => {
       if (prevUnsubscribe) {
+        setUnsubscribeFunc(getDefaultUnsubscribeFunc());
         setIsLoading(true);
         await (
           await prevUnsubscribe
         )();
         setIsLoading(false);
       }
-      return pocketBase()
+      const unsubscribeFunc = pocketBase()
         .collection("recipes")
         .subscribe(
           "*",
@@ -48,8 +56,17 @@ export function RecipeListContainer() {
             filter: pocketBase().filter(`creator = "${authData()?.id}"`),
           },
         );
+
+      setUnsubscribeFunc(unsubscribeFunc);
+      return unsubscribeFunc;
     },
   );
+
+  onCleanup(async () => {
+    await (
+      await unsubscribeFunc()
+    )();
+  });
 
   return (
     <>

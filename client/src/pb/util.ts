@@ -15,15 +15,21 @@ export const arrayUpdateSubscriptionCallback = <T extends { id: string }>(
           return recipe.id === newItem.id;
         });
         if (index) {
-          const newArray = [...prev];
+          const newArray = [
+            ...prev.filter((recipe) => recipe.id !== newItem.id),
+          ];
           newArray.splice(index, 1, newItem);
           return newArray;
         }
-        return [newItem, ...prev];
+        return [newItem, ...prev.filter((recipe) => recipe.id !== newItem.id)];
 
       case "delete":
         return prev.filter((item) => item.id !== newItem.id);
     }
     return [...prev];
   });
+};
+
+export const getDefaultUnsubscribeFunc = () => {
+  return Promise.resolve(() => Promise.resolve());
 };

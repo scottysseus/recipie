@@ -1,8 +1,8 @@
 import { Navigator, useNavigate } from "@solidjs/router";
 import PocketBase, { AuthModel } from "pocketbase";
 import { Setter } from "solid-js";
-import { useAuthContext } from "./AuthContext";
-import { usePocketBaseContext } from "./PocketBaseContext";
+import { useAuthContext } from "../../AuthContext";
+import { usePocketBaseContext } from "../../PocketBaseContext";
 
 export function SignIn() {
   const [, setAuthData] = useAuthContext()!;
