@@ -57,11 +57,14 @@ function smartImport(
   }
   return Promise.all(
     recipeUrls.map((url) =>
-      pocketBase.collection("smartImports").create({
-        creator,
-        url,
-        status: "processing",
-      }),
+      pocketBase.collection("smartImports").create(
+        {
+          creator,
+          url,
+          status: "processing",
+        },
+        { requestKey: url },
+      ),
     ),
   );
 }
