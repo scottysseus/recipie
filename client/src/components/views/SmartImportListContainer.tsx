@@ -35,6 +35,7 @@ export function SmartImportListContainer() {
       .collection("smartImports")
       .getFullList({
         filter: pocketBase().filter(filter),
+        sort: "-created",
       })
       .then((result) => {
         setSmartImports(result.map(smartImportFromModel));

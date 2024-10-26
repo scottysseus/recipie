@@ -27,6 +27,7 @@ export function RecipeListContainer() {
       .collection("recipes")
       .getFullList({
         filter: pocketBase().filter(`creator = "${authData()?.id}"`),
+        sort: "-created",
       })
       .then((result) => {
         setRecipes(result.map(recipeFromModel));

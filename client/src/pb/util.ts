@@ -1,32 +1,41 @@
 import { Setter } from "solid-js";
 
-export const arrayUpdateSubscriptionCallback = <T extends { id: string }>(
+export const arrayUpdateSubscriptionCallback = <
+  T extends { id: string; created: string },
+>(
   newItem: T,
   action: string,
   signalSetter: Setter<T[]>,
 ) => {
   signalSetter((prev) => {
     let index = NaN;
+    let newArray = [...prev];
     switch (action) {
       case "create":
-        return [newItem, ...prev.filter((recipe) => recipe.id !== newItem.id)];
+        newArray = [
+          newItem,
+          ...prev.filter((recipe) => recipe.id !== newItem.id),
+        ];
+        break;
       case "update":
         index = prev.findIndex((recipe) => {
           return recipe.id === newItem.id;
         });
         if (index) {
-          const newArray = [
-            ...prev.filter((recipe) => recipe.id !== newItem.id),
-          ];
+          newArray = [...prev.filter((recipe) => recipe.id !== newItem.id)];
           newArray.splice(index, 1, newItem);
-          return newArray;
+        } else {
+          [newItem, ...prev.filter((recipe) => recipe.id !== newItem.id)];
         }
-        return [newItem, ...prev.filter((recipe) => recipe.id !== newItem.id)];
-
+        break;
       case "delete":
-        return prev.filter((item) => item.id !== newItem.id);
+        newArray = prev.filter((item) => item.id !== newItem.id);
+        break;
     }
-    return [...prev];
+    newArray.sort((a, b) => {
+      return new Date(a.created).getTime() - new Date(b.created).getTime();
+    });
+    return newArray;
   });
 };
 
