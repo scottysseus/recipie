@@ -37,7 +37,6 @@ export function SmartImportListContainer() {
         filter: pocketBase().filter(filter),
       })
       .then((result) => {
-        console.log("getFullList", result);
         setSmartImports(result.map(smartImportFromModel));
       })
       .finally(() => setIsLoading(false));
@@ -67,7 +66,6 @@ export function SmartImportListContainer() {
           "*",
           (e) => {
             const newImport = smartImportFromModel(e.record);
-            console.log("subscribe", e);
             arrayUpdateSubscriptionCallback(
               newImport,
               e.action,
