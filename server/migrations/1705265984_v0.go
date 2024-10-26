@@ -130,7 +130,7 @@ func initSchema(dao *daos.Dao) error {
 		}),
 		ListRule:   types.Pointer("@request.auth.id != ''"),
 		ViewRule:   types.Pointer("@request.auth.id != ''"),
-		CreateRule: types.Pointer("allowedUsers.email ?= @request.auth.email"),
+		CreateRule: types.Pointer("@request.auth.id != ''"),
 		UpdateRule: types.Pointer("@request.auth.id != ''"),
 		DeleteRule: types.Pointer("@request.auth.id != ''"),
 	}
