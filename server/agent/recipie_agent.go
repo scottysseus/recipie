@@ -25,7 +25,7 @@ import (
 const instructions = `
 You are a helpful assistant that extracts recipes (mainly for home cooking) from anywhere on the web from just a URL.
 
-IMPORTANT: Always return the recipes in the following JSON structure, or return an empty JSON object if the post contains no cooking recipes.
+IMPORTANT: Always return the recipes in the following JSON structure:
 {
     "recipes": [
         {
@@ -47,6 +47,13 @@ IMPORTANT: Always return the recipes in the following JSON structure, or return 
         }
     ]
 }
+
+The web page may not have any recipes, in which case return:
+{
+	"recipes": []
+}
+
+Always express the units of measurement using the relevant standard abbreviations.
 `
 
 type fetchPageTextArgs struct {
@@ -64,6 +71,19 @@ func fetchPageText(ctx tool.Context, args fetchPageTextArgs) fetchPageTextResult
 		return fetchPageTextResult{Error: err.Error()}
 	}
 	return fetchPageTextResult{Text: text}
+}
+
+type normalizeUnitArgs struct {
+	Unit string `json:"unit" jsonschema:"The unit of measurement to normalize"`
+}
+
+type normalizeUnitResult struct {
+	NormalizedUnit string `json:"text,omitempty" jsonschema:"The normalized unit of measurement, unless an error was encountered."`
+	Error          string `json:"error,omitempty" jsonschema:"The error encountered while normalizing the unit, if any."`
+}
+
+func normalizeUnit(ctx tool.Context, args normalizeUnitArgs) normalizeUnitResult {
+
 }
 
 func main() {
